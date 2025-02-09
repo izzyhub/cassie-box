@@ -1,0 +1,18 @@
+---
+# config files for sops & used for encrypting keys that sops-nix decrypts.
+# each machine key is derieved from its generated `ssh_hosts_ed` file
+# via ssh-to-age
+# sops encrypts the secrets ready to decrypt with the private key of any of the below machines
+# OR my 'main' key thats kept outside this repo securely.
+
+# key-per-machine is a little more secure and a little more work than
+# copying one key to each machine
+
+keys:
+  - &Isabelles-MBP age123dsa4ane5583sezln90h5ax8hjyx4c2r5psu6ydxy8k5xtfva6sme6pa0
+
+creation_rules:
+  - path_regex: .*\.sops\.yaml$
+    key_groups:
+      - age:
+          - *Isabelles-MBP

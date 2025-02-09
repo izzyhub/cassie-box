@@ -1,0 +1,21 @@
+apiTokenFile: ENC[AES256_GCM,data:mwHP1GIdbhExYZibTbxhtWofX/HewXQN2YwpqcrBjOszNL870vVJD3BQxUrL120+LZRZvywNbuu+UkRwOLJcA+7XaS86nrt+UUmyJNKJK+rtDHfn929mMkPbwfg=,iv:HciX51PSXnLlYhSnwfkl9VD7mbpGIzYO5E5j9YfwTL4=,tag:l7pXabQ6gyJqFIBmAwrdww==,type:str]
+sops:
+    kms: []
+    gcp_kms: []
+    azure_kv: []
+    hc_vault: []
+    age:
+        - recipient: age123dsa4ane5583sezln90h5ax8hjyx4c2r5psu6ydxy8k5xtfva6sme6pa0
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBaVjVXWFpMa1BHbXVWZ0RE
+            QVIyOEs3OS9kd0xuRTRRYnBoOHEwTEhCTWlFCk15c0NjUlBnamVTYmxXMUNmTWZ2
+            aGxjQS91TDAzaVBpRTNwZUNlTjlobVUKLS0tIHF5TFhrZ2ZHN0V4YmcxalpzT2Zh
+            NlJmK0hYZWp4RDArSU1xQ2JyT3lDb3MKHbm5Mt7H1EBLi42H8N4jbXwoXjv02l4V
+            MKknoLEkcRK8HrXKSNWlBAbspGjm1iyDTijvDrY42tB8cLLAsciNCw==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2025-02-09T21:22:26Z"
+    mac: ENC[AES256_GCM,data:BLy5+LRbQzKN64H7I92c0kU6AcEXIrFtwllL/pvMYa5BE8YDfTcTGwEfxeDiCfEC9i1r8128TYfeiD9lDvDZ/AwNYmj+IxvnOkuAjzjbmtFPbfacUcqZTgxa6qIb5yT9LMGir0Ebyhn+jtg8WJgRRpDyXlv4zHmJov8l99lZ6tk=,iv:VIfmGluk2MVVnqn8oGWqgoDQB/ITJ7vYb8gW8F01T8w=,tag:ziWqYtaufODS3MKJW1UCMg==,type:str]
+    pgp: []
+    unencrypted_suffix: _unencrypted
+    version: 3.9.4

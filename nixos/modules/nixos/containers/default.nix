@@ -1,0 +1,25 @@
+{
+  imports = [
+    ./homepage
+    ./gatus
+    ./qbittorrent
+    ./plex
+    ./tautulli
+    ./searxng
+    ./whoogle
+    ./redlib
+    ./home-assistant
+    ./calibre
+    ./immich
+    ./rxresume
+    ./browserless
+    ./overseer
+    ./changedetection
+    ./linkding
+    ./autobrr
+    ./filebrowser
+    ./maintainerr
+    ./cross-seed
+    ./redbot
+  ];
+}
