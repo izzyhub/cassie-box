@@ -3,18 +3,25 @@
   "packageRules": [
     {
   // automerge minor, patch, digest
-      "matchDatasources": ['docker'],
+      "matchDatasources": ['docker', 'github-tags'],
       "automerge": "true",
       "automergeType": "branch",
-      "schedule": [ "before 4am on Sunday" ],
+      "schedule": [ "before 11am on Sunday" ],
       "matchUpdateTypes": [ 'minor', 'patch', 'digest'],
       "matchPackageNames": [
         'ghcr.io/twin/gatus',
         'vaultwarden/server',
         'sissbruecker/linkding',
+        'ghcr.io/autobrr/autobrr',
         'gotenberg/gotenberg',
         'ghcr.io/recyclarr/recyclarr',
-        'ghcr.io/onedr0p/sabnzbd',
+        'ghcr.io/home-operations/sabnzbd',
+        'ghcr.io/home-operations/qbittorrent',
+        'docker.io/filebrowser/filebrowser',
+        'ghcr.io/jorenn92/Maintainerr',
+        'github.com/zricethezav/gitleaks',
+        'github.com/actions/create-github-app-token',
+
       ],
 
     },
@@ -23,7 +30,7 @@
       "matchDatasources": ['docker'],
       "automerge": "true",
       "automergeType": "branch",
-      "schedule": [ "before 4am on Sunday" ],
+      "schedule": [ "before 11am on Sunday" ],
       "matchUpdateTypes": [ 'patch', 'digest'],
       "matchPackageNames": [
         "ghcr.io/gethomepage/homepage",

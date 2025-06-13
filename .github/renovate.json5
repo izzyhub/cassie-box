@@ -14,15 +14,15 @@
     enabled: true,
     automerge: true,
     schedule: [
-      'before 4am on Sunday',
+      'before 11am on Sunday',
     ],
   },
   customManagers: [
     {
       customType: 'regex',
-      fileMatch: [
-        '^nixos/.*\\.nix$',
-        '^flyio/.*\\.toml$',
+      managerFilePatterns: [
+        '/^nixos/.*\\.nix$/',
+        '/^flyio/.*\\.toml$/',
       ],
       matchStrings: [
         'image *= *"(?<depName>.*?):(?<currentValue>.*?)(@(?<currentDigest>sha256:[a-f0-9]+))?"',
