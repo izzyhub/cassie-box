@@ -85,9 +85,10 @@ in
     users.users.izzy.extraGroups = [ group ];
 
 
-    # Folder perms - only for containers
+    # Folder perms - create both dataDir and configDir with proper ownership
     systemd.tmpfiles.rules = [
-      "d ${appFolder}/ 0750 ${user} ${group} -"
+      "d ${cfg.dataDir} 0750 ${user} ${group} -"
+      "d ${appFolder} 0750 ${user} ${group} -"
     ];
 
     #environment.persistence."${config.mySystem.system.impermanence.persistPath}" = lib.mkIf config.mySystem.system.impermanence.enable {
