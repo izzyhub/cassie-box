@@ -11,6 +11,7 @@ let
   port = 8080; #int
   qbit_port = 32189;
   cfg = config.mySystem.services.${app};
+  dataFolder = "${config.mySystem.dataFolder}";
   appFolder = "/var/lib/${app}";
   persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
 in
@@ -51,7 +52,7 @@ in
         ports = [ "${builtins.toString qbit_port}:${builtins.toString qbit_port}" ];
         volumes = [
           "${appFolder}:/config:rw"
-          "${options.mySystem.dataFolder}/downloads/qbittorrent:${options.mySystem.dataFolder}/downloads/qbittorrent:rw"
+          "${dataFolder}/downloads/qbittorrent:${dataFolder}/downloads/qbittorrent:rw"
           "/mnt/cache:/cache"
           "/etc/localtime:/etc/localtime:ro"
         ];
