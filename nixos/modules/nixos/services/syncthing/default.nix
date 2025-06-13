@@ -120,11 +120,8 @@ in
         folders = {
           "drop-box-cassie" = {
             path = "${cfg.syncPath}/drop-box-cassie";
-            devices = [ "Nat Pixel 6Pro" ];
+            devices = [ "drop-box-cassie" ];
           };
-          "emulation" = {
-            path = "${cfg.syncPath}/emulation";
-            devices = [ "daedalus" "steam-deck" "citadel-bazzite" ];
         };
       };
     };
