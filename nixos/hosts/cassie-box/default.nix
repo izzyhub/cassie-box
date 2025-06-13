@@ -60,12 +60,18 @@
     };
   };
 
+  # Create directories for mergerfs
+  systemd.tmpfiles.rules = [
+    "d /mnt/data1 0755 root root -"
+    "d /mnt/data2 0755 root root -"
+    "d /mnt/data 0755 root root -"
+  ];
+
   # Add mergerfs configuration
   fileSystems."/mnt/data" = {
-    device = "mergerfs";
+    device = "/mnt/data1:/mnt/data2";
     fsType = "fuse.mergerfs";
     options = [
-      "/mnt/data1:/mnt/data2"
       "rw"
       "use_ino"
       "allow_other"
@@ -77,7 +83,7 @@
   };
 
   mySystem.purpose = "Cassie Services";
-  #mySystem.system.impermanence.enable = true;
+  mySystem.system.impermanence.enable = true;
   mySystem.system.autoUpgrade.enable = true; # bold move cotton
   mySystem.services = {
     openssh.enable = true;
@@ -104,8 +110,8 @@
     sonarr.enable = true;
     radarr.enable = true;
     recyclarr.enable = true;
-    # lidarr.enable = true;  # Temporarily disabled - placeholder secrets
-    # readarr.enable = true;  # Temporarily disabled - placeholder secrets
+    lidarr.enable = true;
+    readarr.enable = true;
     sabnzbd.enable = true;
     qbittorrent.enable = true;
     qbittorrent-lts.enable = true;

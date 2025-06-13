@@ -41,9 +41,9 @@ in
     #   restartUnits = [ "${app}.service" ];
     # };
 
-    #environment.persistence."${config.mySystem.system.impermanence.persistPath}" = lib.mkIf config.mySystem.system.impermanence.enable {
-      #directories = [{ directory = appFolder; user = "postgres"; group = "postgres"; mode = "750"; }];
-    #};
+    environment.persistence."${config.mySystem.persistentFolder}" = lib.mkIf config.mySystem.system.impermanence.enable {
+      directories = [{ directory = appFolder; user = "postgres"; group = "postgres"; mode = "750"; }];
+    };
 
 
     services.postgresql = {

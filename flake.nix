@@ -57,7 +57,7 @@
     , home-manager
     , disko
     , deploy-rs
-    #, impermanence
+    , impermanence
     , ...
     } @ inputs:
     let
@@ -98,7 +98,8 @@
             , baseModules ? [
               disko.nixosModules.disko
               sops-nix.nixosModules.sops
-          home-manager.nixosModules.home-manager
+              impermanence.nixosModules.impermanence
+              home-manager.nixosModules.home-manager
               ./nixos/profiles/global.nix # all machines get a global profile
               ./nixos/modules/nixos # all machines get nixos modules
               ./nixos/hosts/${hostname}   # load this host's config folder for machine-specific config

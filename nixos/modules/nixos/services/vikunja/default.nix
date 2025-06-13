@@ -14,7 +14,7 @@ let
   group = "vikunja"; #string
   inherit (config.services.vikunja) port; #int
   appFolder = "/var/lib/private/${app}";
-  # persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
+  persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
   host = "${app}" + (if cfg.dev then "-dev" else "");
   url = "${host}.${config.networking.domain}";
 in
@@ -69,9 +69,9 @@ in
     };
 
 
-    #environment.persistence."${config.mySystem.system.impermanence.persistPath}" = lib.mkIf config.mySystem.system.impermanence.enable {
-      #directories = [ appFolder ];
-    #};
+    environment.persistence."${config.mySystem.persistentFolder}" = lib.mkIf config.mySystem.system.impermanence.enable {
+      directories = [ appFolder ];
+    };
 
     users = {
       groups.vikunja = { };

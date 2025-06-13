@@ -12,7 +12,7 @@ let
   qbit_port = 32387;
   cfg = config.mySystem.services.${app};
   appFolder = "/var/lib/${app}";
-  # persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
+  persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
   xseedShell = pkgs.writeScriptBin "xseed.sh" # scrit to call cross-seed upon torrent finish
     ''
       #!/bin/bash
@@ -62,9 +62,9 @@ in
 
 
 
-    #environment.persistence."${config.mySystem.system.impermanence.persistPath}" = lib.mkIf config.mySystem.system.impermanence.enable {
-      #directories = [{ directory = appFolder; inherit user; inherit group; mode = "750"; }];
-    #};
+    environment.persistence."${config.mySystem.persistentFolder}" = lib.mkIf config.mySystem.system.impermanence.enable {
+      directories = [{ directory = appFolder; inherit user; inherit group; mode = "750"; }];
+    };
 
     services.nginx.virtualHosts."${app}.${config.networking.domain}" = {
       useACMEHost = config.networking.domain;

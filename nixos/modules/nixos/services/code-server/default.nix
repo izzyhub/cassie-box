@@ -21,9 +21,9 @@ in
 
   config = mkIf cfg.enable {
 
-    #environment.persistence."${config.mySystem.system.impermanence.persistPath}" = lib.mkIf config.mySystem.system.impermanence.enable {
-      #directories = [{ directory = appFolder; inherit user; inherit group; mode = "750"; }];
-    #};
+    environment.persistence."${config.mySystem.persistentFolder}" = lib.mkIf config.mySystem.system.impermanence.enable {
+      directories = [{ directory = appFolder; inherit user; inherit group; mode = "750"; }];
+    };
 
     services.code-server = {
       auth = "none";

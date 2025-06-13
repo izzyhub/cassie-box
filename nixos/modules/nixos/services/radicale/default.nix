@@ -14,7 +14,7 @@ let
   group = app; #string
   port = 5232; #int
   appFolder = "/var/lib/${app}";
-  # persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
+  persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
   host = "${app}" + (if cfg.dev then "-dev" else "");
   url = "${host}.${config.networking.domain}";
 in
@@ -70,10 +70,10 @@ in
     users.users.izzy.extraGroups = [ group ];
     users.users.cassie.extraGroups = [ group ];
 
-    #environment.persistence."${config.mySystem.system.impermanence.persistPath}" = lib.mkIf config.mySystem.system.impermanence.enable {
-      #hideMounts = true;
-      #directories = [ "/var/lib/radicale/" ];
-    #};
+    environment.persistence."${config.mySystem.persistentFolder}" = lib.mkIf config.mySystem.system.impermanence.enable {
+      hideMounts = true;
+      directories = [ "/var/lib/radicale/" ];
+    };
 
     ## service
     services.radicale = {

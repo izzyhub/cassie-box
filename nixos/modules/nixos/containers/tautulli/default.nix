@@ -12,7 +12,7 @@ let
   port = 8181; #int
   cfg = config.mySystem.services.${app};
   appFolder = "/var/lib/${app}";
-  # persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
+  persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
 in
 {
   options.mySystem.services.${app} =
@@ -47,9 +47,9 @@ in
       };
     };
 
-    #environment.persistence."${config.mySystem.system.impermanence.persistPath}" = lib.mkIf config.mySystem.system.impermanence.enable {
-      #directories = [{ directory = appFolder; inherit user; inherit group; mode = "750"; }];
-    #};
+    environment.persistence."${config.mySystem.persistentFolder}" = lib.mkIf config.mySystem.system.impermanence.enable {
+      directories = [{ directory = appFolder; inherit user; inherit group; mode = "750"; }];
+    };
 
     mySystem.services.homepage.media = mkIf cfg.addToHomepage [
       {

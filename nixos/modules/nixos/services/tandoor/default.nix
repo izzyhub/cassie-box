@@ -14,7 +14,7 @@ let
   group = "568"; #string
   inherit (config.services.tandoor-recipes) port; #int
   appFolder = "/var/lib/private/tandor-recipes/";
-  # persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
+  persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
   host = "${app}" + (if cfg.dev then "-dev" else "");
   url = "${host}.${config.networking.domain}";
 in
@@ -77,9 +77,9 @@ in
     # "d ${appFolder}/ 0750 ${user} ${group} -"
     # ];
 
-    #environment.persistence."${config.mySystem.system.impermanence.persistPath}" = lib.mkIf config.mySystem.system.impermanence.enable {
-      #directories = [{ directory = appFolder; inherit user; inherit group; mode = "750"; }];
-    #};
+    environment.persistence."${config.mySystem.persistentFolder}" = lib.mkIf config.mySystem.system.impermanence.enable {
+      directories = [{ directory = appFolder; inherit user; inherit group; mode = "750"; }];
+    };
 
 
     ## service

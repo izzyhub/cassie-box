@@ -8,7 +8,7 @@ let
   cfg = config.mySystem.security.acme;
   app = "acme";
   appFolder = "/var/lib/${app}";
-  # persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
+  persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
   user = app;
   group = app;
 
@@ -22,9 +22,9 @@ in
       "security/acme/env".restartUnits = [ "${app}.service" ];
     };
 
-    #environment.persistence."${config.mySystem.system.impermanence.persistPath}" = lib.mkIf config.mySystem.system.impermanence.enable {
-      #directories = [ "/var/lib/acme" ];
-    #};
+    environment.persistence."${config.mySystem.persistentFolder}" = lib.mkIf config.mySystem.system.impermanence.enable {
+      directories = [ "/var/lib/acme" ];
+    };
 
 
     security.acme = {

@@ -13,7 +13,7 @@ let
   port = 3000; #int
   cfg = config.mySystem.services.${app};
   appFolder = "/var/lib/${app}";
-  # persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
+  persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
 
   # TODO refactor out this sht
   settings =
@@ -45,7 +45,7 @@ let
   bookmarks = [
     {
       Administration = [
-        { Source = [{ icon = "github.png"; href = "https://github.com/truxnell/nix-config"; }]; }
+        { Source = [{ icon = "github.png"; href = "https://github.com/izzyhub/cassie-box"; }]; }
         { Cloudflare = [{ icon = "cloudflare.png"; href = "https://dash.cloudflare.com/"; }]; }
       ];
     }
@@ -99,50 +99,9 @@ let
   widgetsFile = builtins.toFile "homepage-widgets.yaml" (builtins.toJSON widgets);
 
   extraInfrastructure = [
-    {
-      "UDMP" = {
-        href = "https://unifi.${config.mySystem.internalDomain}";
-
-        description = "Unifi Dream Machine Pro";
-        icon = "ubiquiti";
-        widget = {
-          url = "https://unifi.${config.mySystem.internalDomain}";
-          username = "unifi_read_only";
-          password = "{{HOMEPAGE_VAR_UNIFI_PASSWORD}}";
-          type = "unifi";
-        };
-      };
-    }
-    {
-      "Cloudflare" = {
-        href = "https://dash.cloudflare.com";
-        description = "DNS and security provider";
-        icon = "cloudflare";
-        widget = {
-          key = "{{HOMEPAGE_VAR_CLOUDFLARE_TUNNEL_API}}";
-          accountid = "{{HOMEPAGE_VAR_CLOUDFLARE_ACCOUNT_ID}}";
-          tunnelid = "{{HOMEPAGE_VAR_CLOUDFLARE_TUNNEL_ID}}";
-          type = "cloudflared";
-        };
-      };
-    }
-
   ];
 
   extraHome = [
-    {
-      "Prusa Octoprint" = {
-        href = "http://prusa.${config.mySystem.internalDomain}:5000";
-
-        description = "Prusa MK3s 3D printer";
-        icon = "octoprint";
-        widget = {
-          type = "octoprint";
-          url = "http://prusa:5000";
-          key = "{{HOMEPAGE_VAR_PRUSA_OCTOPRINT_API}}";
-        };
-      };
-    }
   ];
 
   services = [
@@ -257,8 +216,8 @@ in
 
         config.sops.secrets."services/sonarr/env".path
         config.sops.secrets."services/radarr/env".path
-        # config.sops.secrets."services/readarr/env".path  # disabled service
-        # config.sops.secrets."services/lidarr/env".path   # disabled service
+        config.sops.secrets."services/readarr/env".path
+        config.sops.secrets."services/lidarr/env".path
         config.sops.secrets."services/prowlarr/env".path
         config.sops.secrets."services/adguardhome/env".path
 
@@ -281,7 +240,7 @@ in
 
       extraOptions = [
         "--read-only"
-        "--tmpfs=/app/config"
+        "--tmpfs=/tmp"
       ];
     };
 

@@ -7,7 +7,7 @@ with lib;
 let
   cfg = config.mySystem.services.node-red;
   app = "node-red";
-  # persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
+  persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
   appFolder = config.services.node-red.userDir;
   inherit (config.services.node-red) user;
   inherit (config.services.node-red) group;
@@ -36,9 +36,9 @@ in
       };
     };
 
-    #environment.persistence."${config.mySystem.system.impermanence.persistPath}" = lib.mkIf config.mySystem.system.impermanence.enable {
-      #directories = [{ directory = appFolder; inherit user; inherit group; mode = "750"; }];
-    #};
+    environment.persistence."${config.mySystem.persistentFolder}" = lib.mkIf config.mySystem.system.impermanence.enable {
+      directories = [{ directory = appFolder; inherit user; inherit group; mode = "750"; }];
+    };
 
     mySystem.services.homepage.home = mkIf cfg.addToHomepage [
       {

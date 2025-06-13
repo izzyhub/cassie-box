@@ -14,7 +14,7 @@ with lib;
   options.mySystem.persistentFolder = mkOption {
     type = types.str;
     description = "persistent folder for nixos mutable files";
-    default = "/persist";
+    default = "/mnt/data/persist";
   };
 
   options.mySystem.domain = mkOption {
