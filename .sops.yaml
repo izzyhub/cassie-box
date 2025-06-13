@@ -10,7 +10,7 @@
 
 keys:
   - &Isabelles-MBP age123dsa4ane5583sezln90h5ax8hjyx4c2r5psu6ydxy8k5xtfva6sme6pa0
-  - &cassie-box age1w5cwqxqplm97h33xfuth9ez94qzgdes57hmkqe2yefmdzk24jqeqxvhmeh
+  - &cassie-box age12ja8mcvmx20w4rsrzqzaeufuh24ghdzhnsmakdxxqd2v74vpj4rsstm2ar
 
 creation_rules:
   - path_regex: .*\.sops\.yaml$
