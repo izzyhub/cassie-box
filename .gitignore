@@ -1,6 +1,1 @@
-.mozilla
-**/*.tmp.sops.yaml
-result
-.direnv
-**/*.sops.tmp.yaml
-.kube
+.DS_Store
