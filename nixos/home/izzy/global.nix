@@ -32,6 +32,8 @@ with config;
         htop
         bottom
         unzip
+        fd
+        ripgrep
       ];
 
       sessionVariables = {
