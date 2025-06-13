@@ -1,0 +1,22 @@
+FROM nixos/nix:2.19.2
+
+# Enable flakes and nix-command
+ENV NIX_CONFIG="experimental-features = nix-command flakes"
+
+# Install basic tools
+RUN nix-channel --add https://nixos.org/channels/nixpkgs-unstable nixpkgs && \
+    nix-channel --update
+
+# Install development tools
+RUN nix-env -iA nixpkgs.nixpkgs-fmt nixpkgs.statix nixpkgs.nixos-rebuild
+
+WORKDIR /workspace
+
+# Copy the project files
+COPY . .
+
+# Set up the Nix environment
+RUN nix develop --command true
+
+# Default command
+CMD ["nix", "develop"]

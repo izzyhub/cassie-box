@@ -73,8 +73,6 @@ in
 
           # upstream DNS
           upstream_dns = [
-            # split brain dns - forward to local powerdns
-            "[/trux.dev/]127.0.0.1:5353"
 
             # resolve fqdn for local ip's
             "[/l.voltaicforge.com/]10.8.10.1"

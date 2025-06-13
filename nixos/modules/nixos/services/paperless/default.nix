@@ -70,7 +70,8 @@ in
       restartUnits = [ "${app}.service" ];
     };
 
-    users.users.truxnell.extraGroups = [ group ];
+    users.users.cassie.extraGroups = [ group ];
+    users.users.izzy.extraGroups = [ group ];
 
     # ensure postgresql setup
     services.postgresql = {
@@ -92,10 +93,10 @@ in
     # "d ${appFolder}/ 0750 ${user} ${group} -"
     # ];
 
-    environment.persistence."${config.mySystem.system.impermanence.persistPath}" = lib.mkIf config.mySystem.system.impermanence.enable {
-      directories = [{ directory = appFolder; inherit user; inherit group; mode = "750"; }
-        { directory = "/var/lib/redis-paperless"; }];
-    };
+    #environment.persistence."${config.mySystem.system.impermanence.persistPath}" = lib.mkIf config.mySystem.system.impermanence.enable {
+      #directories = [{ directory = appFolder; inherit user; inherit group; mode = "750"; }
+        #{ directory = "/var/lib/redis-paperless"; }];
+    #};
 
 
     ## service

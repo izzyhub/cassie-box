@@ -46,7 +46,8 @@ in
       users.groups.kah = {
         gid = 568;
        };
-      users.users.truxnell.extraGroups = [ "kah" ];
+      users.users.cassie.extraGroups = [ "kah" ];
+      users.users.izzy.extraGroups = [ "kah" ];
     };
 
 }

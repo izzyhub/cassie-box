@@ -131,7 +131,9 @@ in
       };
 
       # add user to group to view files/storage
-      users.users.truxnell.extraGroups = [ "traefik" ];
+      users.users.cassie.extraGroups = [ "traefik" ];
+      users.users.izzy.extraGroups = [ "traefik" ];
+
 
       services.traefik = {
         # TODO refactor into subfiles

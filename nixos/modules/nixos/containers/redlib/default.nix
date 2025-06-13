@@ -67,7 +67,8 @@ in
     #   restartUnits = [ "${app}.service" ];
     # };
 
-    users.users.truxnell.extraGroups = [ group ];
+    users.users.izzy.extraGroups = [ group ];
+    users.users.cassie.extraGroups = [ group ];
 
 
     # Folder perms

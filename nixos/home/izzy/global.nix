@@ -7,8 +7,8 @@ with config;
   ];
 
   config = {
-    myHome.username = "truxnell";
-    myHome.homeDirectory = "/home/truxnell/";
+    myHome.username = "izzy";
+    myHome.homeDirectory = "/home/izzy/";
 
     myHome.shell.git = {
       enable = true;
@@ -22,7 +22,7 @@ with config;
     systemd.user.sessionVariables = {
       EDITOR = "nvim";
       VISUAL = "nvim";
-      ZDOTDIR = "/home/pinpox/.config/zsh";
+      ZDOTDIR = "/home/izzy/.config/zsh";
     };
 
     home = {
@@ -30,7 +30,7 @@ with config;
       packages = with pkgs; [
         eza
         htop
-        btm
+        bottom
         unzip
       ];
 
@@ -39,7 +39,7 @@ with config;
         # LIBGL_ALWAYS_SOFTWARE = "1";
         EDITOR = "nvim";
         VISUAL = "nvim";
-        ZDOTDIR = "/home/pinpox/.config/zsh";
+        ZDOTDIR = "/home/izzy/.config/zsh";
       };
 
     };

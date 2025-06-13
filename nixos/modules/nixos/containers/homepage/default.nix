@@ -114,18 +114,6 @@ let
       };
     }
     {
-      "Nextdns" = {
-        href = "https://my.nextdns.io/";
-        description = "Adblocking DNS";
-        icon = "nextdns";
-        widget = {
-          profile = "{{HOMEPAGE_VAR_NEXTDNS_TRUSTED_PROFILE}}";
-          key = "{{HOMEPAGE_VAR_NEXTDNS_API_KEY}}";
-          type = "nextdns";
-        };
-      };
-    }
-    {
       "Cloudflare" = {
         href = "https://dash.cloudflare.com";
         description = "DNS and security provider";
@@ -223,20 +211,20 @@ in
       group = "kah";
       restartUnits = [ "podman-${app}.service" ];
     };
-    sops.secrets."services/lidarr/env" = {
-      # configure secret for forwarding rules
-      sopsFile = ../../services/lidarr/secrets.sops.yaml;
-      owner = "kah";
-      group = "kah";
-      restartUnits = [ "podman-${app}.service" ];
-    };
-    sops.secrets."services/readarr/env" = {
-      # configure secret for forwarding rules
-      sopsFile = ../../services/readarr/secrets.sops.yaml;
-      owner = "kah";
-      group = "kah";
-      restartUnits = [ "podman-${app}.service" ];
-    };
+    # sops.secrets."services/lidarr/env" = {
+    #   # configure secret for forwarding rules
+    #   sopsFile = ../../services/lidarr/secrets.sops.yaml;
+    #   owner = "kah";
+    #   group = "kah";
+    #   restartUnits = [ "podman-${app}.service" ];
+    # };
+    # sops.secrets."services/readarr/env" = {
+    #   # configure secret for forwarding rules
+    #   sopsFile = ../../services/readarr/secrets.sops.yaml;
+    #   owner = "kah";
+    #   group = "kah";
+    #   restartUnits = [ "podman-${app}.service" ];
+    # };
     sops.secrets."services/prowlarr/env" = {
       # configure secret for forwarding rules
       sopsFile = ../../services/prowlarr/secrets.sops.yaml;
@@ -269,8 +257,8 @@ in
 
         config.sops.secrets."services/sonarr/env".path
         config.sops.secrets."services/radarr/env".path
-        config.sops.secrets."services/readarr/env".path
-        config.sops.secrets."services/lidarr/env".path
+        # config.sops.secrets."services/readarr/env".path  # disabled service
+        # config.sops.secrets."services/lidarr/env".path   # disabled service
         config.sops.secrets."services/prowlarr/env".path
         config.sops.secrets."services/adguardhome/env".path
 

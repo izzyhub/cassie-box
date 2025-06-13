@@ -9,15 +9,17 @@
     ./security
   ];
 
-  options.myHome.username = lib.mkOption {
-    type = lib.types.str;
-    description = "users username";
-    default = "cassie";
-  };
-  options.myHome.homeDirectory = lib.mkOption {
-    type = lib.types.str;
-    description = "users homedir";
-    default = "cassie";
+  options.myHome = {
+    username = lib.mkOption {
+      type = lib.types.str;
+      description = "users username";
+      default = "cassie";
+    };
+    homeDirectory = lib.mkOption {
+      type = lib.types.str;
+      description = "users homedir";
+      default = "cassie";
+    };
   };
 
   # Home-manager defaults
@@ -35,5 +37,4 @@
       allowUnfree = true;
     };
   };
-
 }

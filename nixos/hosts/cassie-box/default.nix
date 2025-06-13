@@ -3,8 +3,81 @@
 , pkgs
 , ...
 }: {
+  disko.devices = {
+    disk = {
+      main = {
+        device = "/dev/disk/by-id/ata-CT2000BX500SSD1_2425E8B9A602";
+        type = "disk";
+        content = {
+          type = "gpt";
+          partitions = {
+            ESP = {
+              type = "EF00";
+              size = "1G";
+              content = {
+                type = "filesystem";
+                format = "vfat";
+                mountpoint = "/boot";
+                mountOptions = [ "umask=0077" ];
+              };
+            };
+            root = {
+              size = "50%";
+              content = {
+                type = "filesystem";
+                format = "ext4";
+                mountpoint = "/";
+              };
+            };
+            data = {
+              size = "50%";
+              content = {
+                type = "filesystem";
+                format = "ext4";
+                mountpoint = "/mnt/data1";
+              };
+            };
+          };
+        };
+      };
+      disk2 = {
+        device = "/dev/disk/by-id/nvme-WD_BLACK_SN770_2TB_241958806974";
+        type = "disk";
+        content = {
+          type = "gpt";
+          partitions = {
+            main = {
+              size = "100%";
+              content = {
+                type = "filesystem";
+                format = "ext4";
+                mountpoint = "/mnt/data2";
+              };
+            };
+          };
+        };
+      };
+    };
+  };
+
+  # Add mergerfs configuration
+  fileSystems."/mnt/data" = {
+    device = "mergerfs";
+    fsType = "fuse.mergerfs";
+    options = [
+      "/mnt/data1:/mnt/data2"
+      "rw"
+      "use_ino"
+      "allow_other"
+      "func.getattr=newest"
+      "category.create=ff"
+      "category.action=ff"
+      "category.search=ff"
+    ];
+  };
+
   mySystem.purpose = "Cassie Services";
-  mySystem.system.impermanence.enable = true;
+  #mySystem.system.impermanence.enable = true;
   mySystem.system.autoUpgrade.enable = true; # bold move cotton
   mySystem.services = {
     openssh.enable = true;
@@ -31,19 +104,16 @@
     sonarr.enable = true;
     radarr.enable = true;
     recyclarr.enable = true;
-    lidarr.enable = true;
-    readarr.enable = true;
+    # lidarr.enable = true;  # Temporarily disabled - placeholder secrets
+    # readarr.enable = true;  # Temporarily disabled - placeholder secrets
     sabnzbd.enable = true;
     qbittorrent.enable = true;
     qbittorrent-lts.enable = true;
-    cross-seed.enable = true;
     prowlarr.enable = true;
-    autobrr.enable = true;
     plex.enable = true;
     maintainerr.enable = true;
     immich.enable = true;
     filebrowser.enable = true;
-    atuin.enable = true;
     syncthing = {
       enable = true;
       syncPath = "/zfs/syncthing/";
@@ -53,8 +123,6 @@
     redbot.enable=true;
     silverbullet.enable=true;
     tandoor.enable=true;
-    open-webui.enable=true;
-
 
     invidious.enable = true;
     thelounge.enable = true;
@@ -65,11 +133,6 @@
     # monitoring
     victoriametrics.enable = true;
     grafana.enable = true;
-    nextdns-exporter.enable = true;
-    unpoller.enable = true;
-
-    hs110-exporter.enable = true;
-
   };
   mySystem.security.acme.enable = true;
   mySystem.containers = {
@@ -78,6 +141,7 @@
 
   mySystem.persistentFolder = "/persist";
   mySystem.system.motd.networkInterfaces = [ "enp1s0" ];
+  mySystem.dataFolder = "/mnt/data";
 
   # Intel qsv
   boot.kernelParams = [
@@ -113,44 +177,11 @@
   networking.hostName = "cassie-box"; # Define your hostname.
   networking.hostId = "0a90730f";
   networking.useDHCP = lib.mkDefault true;
-
-    fileSystems."/boot" =
-      {
-        device = "/dev/disk/by-label/EFI";
-        fsType = "vfat";
-      };
-
-
-  fileSystems."/" =
-  {
-      device = "/dev/disk/by-id/ata-CT2000BX500SSD1_2425E8B9A602"
-      fsType = "ext4";
-  };
-
-  fileSystems."/nix" =
-  {
-
-  };
-
-  fileSystems."/persist" =
-    {
-      device = "rpool/safe/persist";
-      fsType = "zfs";
-      neededForBoot = true; # for impermanence
-    };
-
-  fileSystems."/boot" =
-    {
-      device = "/dev/disk/by-uuid/76FA-78DF";
-      fsType = "vfat";
-      options = [ "fmask=0022" "dmask=0022" ];
-    };
-
-    services.samba = {
-      enable = true;
-      openFirewall = true;
-      settings = {
-        global = {
+  services.samba = {
+    enable = true;
+    openFirewall = true;
+    settings = {
+      global = {
         "workgroup" = "WORKGROUP";
         "server string" = "cassie-box";
         "netbios name" = "cassie-box";
@@ -159,42 +190,27 @@
         "hosts deny" = "0.0.0.0/0";
         "guest account" = "nobody";
         "map to guest" = "bad user";
-        };
-        "backup" = {
-          "path" = "/zfs/backup";
-          "read only" = "no";
-        };
-        "documents" = {
-          "path" = "/zfs/documents";
-          "read only" = "no";
-        };
-        "natflix" = {
-          "path" = "/tank/natflix";
-          "read only" = "no";
-        };
-        "scans" = {
-          "path" = "/zfs/documents/scans";
-          "read only" = "no";
-        };
-        "paperless" = {
-          "path" = "/zfs/documents/paperless/inbound";
-          "read only" = "no";
-        };
       };
-
+      "documents" = {
+        "path" = "/mnt/data/documents";
+        "read only" = "no";
+      };
+      "nasflix" = {
+        "path" = "/mnt/data/media";
+        "read only" = "no";
+      };
+      "paperless" = {
+        "path" = "/mnt/data/paperless/inbound";
+        "read only" = "no";
+      };
     };
-    services.samba-wsdd.enable = true; # make shares visible for windows 10 clients
+  };
+  services.samba-wsdd.enable = true; # make shares visible for windows 10 clients
 
-    environment.systemPackages = with pkgs; [
-      btrfs-progs
-      p7zip
-      unrar
-    ];
-
-
-
-    environment.persistence."${config.mySystem.system.impermanence.persistPath}" = lib.mkIf config.mySystem.system.impermanence.enable {
-      directories = [ "/var/lib/samba/" ];
-    };
-
+  environment.systemPackages = with pkgs; [
+    btrfs-progs
+    p7zip
+    unrar
+    mergerfs
+  ];
 }

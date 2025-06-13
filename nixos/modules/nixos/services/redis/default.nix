@@ -68,7 +68,8 @@ in
     #   restartUnits = [ "${app}.service" ];
     # };
 
-    users.users.truxnell.extraGroups = [ group ];
+    users.users.cassie.extraGroups = [ group ];
+    users.users.izzy.extraGroups = [ group ];
 
 
     # Folder perms - only for containers
@@ -76,9 +77,9 @@ in
     # "d ${appFolder}/ 0750 ${user} ${group} -"
     # ];
 
-    environment.persistence."${config.mySystem.system.impermanence.persistPath}" = lib.mkIf config.mySystem.system.impermanence.enable {
-      directories = [{ directory = appFolder; inherit user; inherit group; mode = "750"; }];
-    };
+    #environment.persistence."${config.mySystem.system.impermanence.persistPath}" = lib.mkIf config.mySystem.system.impermanence.enable {
+      #directories = [{ directory = appFolder; inherit user; inherit group; mode = "750"; }];
+    #};
 
 
     ## service

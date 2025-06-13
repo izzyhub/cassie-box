@@ -68,11 +68,11 @@ in
     #   restartUnits = [ "${app}.service" ];
     # };
 
-    users.users.truxnell.extraGroups = [ group ];
+    users.users.cassie.extraGroups = [ group ];
 
-    environment.persistence."${config.mySystem.system.impermanence.persistPath}" = lib.mkIf config.mySystem.system.impermanence.enable {
-      directories = [{ directory = appFolder; }];
-    };
+    #environment.persistence."${config.mySystem.system.impermanence.persistPath}" = lib.mkIf config.mySystem.system.impermanence.enable {
+      #directories = [{ directory = appFolder; }];
+    #};
 
     ## service
     services.prowlarr = {

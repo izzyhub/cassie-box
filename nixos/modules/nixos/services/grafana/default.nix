@@ -68,7 +68,8 @@ in
     #   restartUnits = [ "${app}.service" ];
     # };
 
-    users.users.truxnell.extraGroups = [ group ];
+    users.users.cassie.extraGroups = [ group ];
+    users.users.izzy.extraGroups = [ group ];
 
 
     # Folder perms - only for containers
@@ -76,9 +77,9 @@ in
     # "d ${appFolder}/ 0750 ${user} ${group} -"
     # ];
 
-    environment.persistence."${config.mySystem.system.impermanence.persistPath}" = lib.mkIf config.mySystem.system.impermanence.enable {
-      directories = [{ directory = appFolder; inherit user; inherit group; mode = "750"; }];
-    };
+    #environment.persistence."${config.mySystem.system.impermanence.persistPath}" = lib.mkIf config.mySystem.system.impermanence.enable {
+      #directories = [{ directory = appFolder; inherit user; inherit group; mode = "750"; }];
+    #};
 
 
     ## service
@@ -211,19 +212,8 @@ in
               url = "https://grafana.com/api/dashboards/20204/revisions/1/download";
               options.path = ./dashboards/smartctl.json;
             }
-            {
-              name = "nextdns";
-              type = "file";
-              url = "https://github.com/truxnell/home-cluster/blob/0f7b47a9fec9419a4c5d6b5c4a4ae219ad342c1c/kubernetes/hegira/apps/monitoring/nextdns-exporter/trusted/externalsecret.yaml";
-              options.path = ./dashboards/nextdns.json;
-            }
-
-
-
           ];
-
       };
-
     };
 
 

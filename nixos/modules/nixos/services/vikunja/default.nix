@@ -69,14 +69,15 @@ in
     };
 
 
-    environment.persistence."${config.mySystem.system.impermanence.persistPath}" = lib.mkIf config.mySystem.system.impermanence.enable {
-      directories = [ appFolder ];
-    };
+    #environment.persistence."${config.mySystem.system.impermanence.persistPath}" = lib.mkIf config.mySystem.system.impermanence.enable {
+      #directories = [ appFolder ];
+    #};
 
     users = {
       groups.vikunja = { };
 
-      users.truxnell.extraGroups = [ group ];
+      users.izzy.extraGroups = [ group ];
+      users.cassie.extraGroups = [ group ];
       users."${user}" = {
         inherit group;
         createHome = false;
@@ -95,7 +96,7 @@ in
         service = {
           publicurl = url;
           enablecaldav=true;
-          timezone="Australia/Melbourne";
+          timezone="America/New_York";
         };
         mailer = {
           enabled = true;

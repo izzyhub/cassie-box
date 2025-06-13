@@ -78,9 +78,9 @@ in
       restartUnits = [ "${app}.service" ];
     };
 
-    environment.persistence."${config.mySystem.system.impermanence.persistPath}" = lib.mkIf config.mySystem.system.impermanence.enable {
-      directories = [{ directory = appFolder; inherit user group; mode="755"; }];
-    };
+    #environment.persistence."${config.mySystem.system.impermanence.persistPath}" = lib.mkIf config.mySystem.system.impermanence.enable {
+      #directories = [{ directory = appFolder; inherit user group; mode="755"; }];
+    #};
 
 
     systemd.services."recyclarr" =

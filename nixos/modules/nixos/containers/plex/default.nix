@@ -27,16 +27,16 @@ in
 
   config = mkIf cfg.enable {
 
-    environment.persistence."${config.mySystem.system.impermanence.persistPath}" = lib.mkIf config.mySystem.system.impermanence.enable {
-      directories = [{ directory = appFolder; inherit user; inherit group; mode = "750"; }];
-    };
+    #environment.persistence."${config.mySystem.system.impermanence.persistPath}" = lib.mkIf config.mySystem.system.impermanence.enable {
+      #directories = [{ directory = appFolder; inherit user; inherit group; mode = "750"; }];
+    #};
 
     virtualisation.oci-containers.containers.${app} = {
       image = "${image}";
       user = "568:568";
       volumes = [
         "${appFolder}:/config:rw"
-        "${config.mySystem.nasFolder}/natflix:/data:rw"
+        "${config.mySystem.dataFolder}/natflix:/data:rw"
         "/zfs/backup/kubernetes/apps/plex:/config/backup:rw" # TODO fix backup path with var.
         "/dev/dri:/dev/dri" # for hardware transcoding
         "/etc/localtime:/etc/localtime:ro"

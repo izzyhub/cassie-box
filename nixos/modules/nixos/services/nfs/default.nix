@@ -44,7 +44,7 @@ in
         where = "/mnt/nas";
       }];
 
-      fileSystems."${config.mySystem.nasFolder}" = lib.mkIf (!cfg.lazy) {
+      fileSystems."${config.mySystem.dataFolder}" = lib.mkIf (!cfg.lazy) {
         device = "daedalus.${config.mySystem.internalDomain}:/";
         fsType = "nfs";
       };

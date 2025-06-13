@@ -3,6 +3,9 @@
 version: "3"
 
 includes:
+  ssh:
+    taskfile: ".taskfiles/ssh"
+    dir: .taskfiles/ssh
   sop:
     taskfile: ".taskfiles/sops"
     dir: .taskfiles/sops
@@ -38,3 +41,44 @@ tasks:
     desc: Check project files
     cmds:
       - nixpkgs-fmt {{.ROOT_DIR}}
+
+  nix-eval:
+    desc: Evaluate all nix files without building
+    cmds:
+      - nix eval --raw .#checks.{{.OS}}.{{.ARCH}}.build
+      - nix eval --raw .#devShells.{{.OS}}.{{.ARCH}}.default
+
+  nix-build-test:
+    desc: Test builds without creating outputs
+    cmds:
+      - nix build --no-link .#checks.{{.OS}}.{{.ARCH}}.build
+
+  nixos-test:
+    desc: Test NixOS configuration in a VM
+    cmds:
+      - nixos-rebuild build-vm --flake .#{{.HOSTNAME}}
+
+  test-all:
+    desc: Run all nix tests safely
+    cmds:
+      - task: lint
+      - task: nix-eval
+      - task: nix-build-test
+      - task: nixos-test
+
+  docker-build:
+    desc: Build the testing Docker image
+    cmds:
+      - docker build -t cassie-box-test -f Dockerfile.test .
+
+  docker-test:
+    desc: Run tests in Docker container
+    deps: [docker-build]
+    cmds:
+      - docker run --rm -v {{.ROOT_DIR}}:/home/nixuser cassie-box-test nix develop --command task test-all
+
+  docker-shell:
+    desc: Open a shell in the testing container
+    deps: [docker-build]
+    cmds:
+      - docker run --rm -it -v {{.ROOT_DIR}}:/home/nixuser cassie-box-test

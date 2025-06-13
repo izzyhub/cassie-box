@@ -30,7 +30,6 @@ in
       description = "Notify on failed unit %i";
       serviceConfig = {
         Type = "oneshot";
-        # User = config.users.users.truxnell.name;
         EnvironmentFile = config.sops.secrets."services/pushover/env".path;
       };
 

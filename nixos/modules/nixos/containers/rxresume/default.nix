@@ -71,7 +71,8 @@ in
     # enable browserless container on this system
     mySystem.services.browserless-chrome.enable = true;
 
-    users.users.truxnell.extraGroups = [ (builtins.toString config.users.groups.rxresume.gid) ];
+    users.users.izzy.extraGroups = [ (builtins.toString config.users.groups.rxresume.gid) ];
+    users.users.cassie.extraGroups = [ (builtins.toString config.users.groups.rxresume.gid) ];
 
     users.users = {
       rxresume = {
@@ -90,9 +91,9 @@ in
       "d ${appFolder}/ 0750 ${user} ${group} -"
     ];
 
-    environment.persistence."${config.mySystem.system.impermanence.persistPath}" = lib.mkIf config.mySystem.system.impermanence.enable {
-      directories = [{ directory = appFolder; inherit user; inherit group; mode = "750"; }];
-    };
+    #environment.persistence."${config.mySystem.system.impermanence.persistPath}" = lib.mkIf config.mySystem.system.impermanence.enable {
+      #directories = [{ directory = appFolder; inherit user; inherit group; mode = "750"; }];
+    #};
 
     virtualisation.oci-containers.containers = config.lib.mySystem.mkContainer {
       inherit app image;

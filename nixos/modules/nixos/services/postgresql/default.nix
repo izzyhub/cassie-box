@@ -41,9 +41,9 @@ in
     #   restartUnits = [ "${app}.service" ];
     # };
 
-    environment.persistence."${config.mySystem.system.impermanence.persistPath}" = lib.mkIf config.mySystem.system.impermanence.enable {
-      directories = [{ directory = appFolder; user = "postgres"; group = "postgres"; mode = "750"; }];
-    };
+    #environment.persistence."${config.mySystem.system.impermanence.persistPath}" = lib.mkIf config.mySystem.system.impermanence.enable {
+      #directories = [{ directory = appFolder; user = "postgres"; group = "postgres"; mode = "750"; }];
+    #};
 
 
     services.postgresql = {
@@ -71,7 +71,7 @@ in
     # enable backups
     services.postgresqlBackup = mkIf cfg.backup {
       enable = lib.mkForce true;
-      location = "${config.mySystem.nasFolder}/backup/nixos/postgresql";
+      location = "${config.mySystem.dataFolder}/backup/nixos/postgresql";
     };
 
     systemd.services.postgresqlBackup = {

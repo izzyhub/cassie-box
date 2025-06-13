@@ -9,7 +9,7 @@ let
   app = "code-server";
   url = "code-${config.networking.hostName}.${config.networking.domain}";
   appFolder = "/var/lib/${app}";
-  user = "truxnell";
+  user = "cassie";
   group = "users";
 in
 {
@@ -21,11 +21,9 @@ in
 
   config = mkIf cfg.enable {
 
-    environment.persistence."${config.mySystem.system.impermanence.persistPath}" = lib.mkIf config.mySystem.system.impermanence.enable {
-      directories = [{ directory = appFolder; inherit user; inherit group; mode = "750"; }];
-    };
-
-
+    #environment.persistence."${config.mySystem.system.impermanence.persistPath}" = lib.mkIf config.mySystem.system.impermanence.enable {
+      #directories = [{ directory = appFolder; inherit user; inherit group; mode = "750"; }];
+    #};
 
     services.code-server = {
       auth = "none";
@@ -166,7 +164,7 @@ in
             }
           ];
       };
-      user = "truxnell";
+      user = "cassie";
     };
     services.nginx.virtualHosts."code-${config.networking.hostName}.${config.networking.domain}" = {
       useACMEHost = config.networking.domain;

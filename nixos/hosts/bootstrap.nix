@@ -19,7 +19,7 @@
     packages = with pkgs; [
     ];
     openssh.authorizedKeys.keys = [
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMZS9J1ydflZ4iJdJgO8+vnN8nNSlEwyn9tbWU9OcysW truxnell@home"
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGlH7ndB1lbWNBlOFvuPLVFOKbbJDJE4M+oNtEGw0kqi m2-14-mac"
     ];
   };
 
@@ -29,7 +29,7 @@
     packages = with pkgs; [
     ];
     openssh.authorizedKeys.keys = [
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMZS9J1ydflZ4iJdJgO8+vnN8nNSlEwyn9tbWU9OcysW truxnell@home"
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGlH7ndB1lbWNBlOFvuPLVFOKbbJDJE4M+oNtEGw0kqi m2-14-mac"
     ];
   };
   networking.hostId = "0a90730f";

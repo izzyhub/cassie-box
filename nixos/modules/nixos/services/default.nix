@@ -13,10 +13,7 @@
     ./glances
     ./syncthing
     ./restic
-    ./powerdns
     ./adguardhome
-    ./mosquitto
-    ./zigbee2mqtt
     ./postgresql
     ./blocky
     ./code-server
@@ -24,7 +21,6 @@
     ./radicale
     ./node-red
     ./nginx
-    ./miniflux
     ./calibre-web
     ./rss-bridge
     ./paperless
@@ -33,11 +29,9 @@
     ./sonarr
     ./radarr
     ./sabnzbd
-    ./minio
     ./invidious
     ./thelounge
     ./victoriametrics
-    ./unpoller
     ./readarr
     ./lidarr
     ./prowlarr
@@ -45,10 +39,7 @@
     ./code-server
     ./navidrome
     ./vikunja
-    ./steam
-    ./atuin
     ./silverbullet
     ./tandoor
-    ./open-webui
   ];
 }

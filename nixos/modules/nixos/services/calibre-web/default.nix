@@ -66,12 +66,13 @@ in
     #   restartUnits = [ "${app}.service" ];
     # };
 
-    users.users.truxnell.extraGroups = [ group ];
+    users.users.cassie.extraGroups = [ group ];
+    users.users.izzy.extraGroups = [ group ];
 
 
-    environment.persistence."${config.mySystem.system.impermanence.persistPath}" = lib.mkIf config.mySystem.system.impermanence.enable {
-      directories = [{ directory = appFolder; inherit user; inherit group; mode = "750"; }];
-    };
+    #environment.persistence."${config.mySystem.system.impermanence.persistPath}" = lib.mkIf config.mySystem.system.impermanence.enable {
+      #directories = [{ directory = appFolder; inherit user; inherit group; mode = "750"; }];
+    #};
 
     ## service
     services.calibre-web = {
@@ -79,7 +80,7 @@ in
       listen.ip = "0.0.0.0";
       listen.port = port;
       options = {
-        calibreLibrary = "${config.mySystem.nasFolder}/natflix/books/";
+        calibreLibrary = "${config.mySystem.dataFolder}/natflix/books/";
       };
     };
 

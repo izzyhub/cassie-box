@@ -67,9 +67,9 @@ in
     users.users.cassie.extraGroups = [ group ];
 
 
-    environment.persistence."${config.mySystem.system.impermanence.persistPath}" = lib.mkIf config.mySystem.system.impermanence.enable {
-      directories = [{ directory = appFolder; user = "kah"; group = "kah"; mode = "750"; }];
-    };
+    #environment.persistence."${config.mySystem.system.impermanence.persistPath}" = lib.mkIf config.mySystem.system.impermanence.enable {
+      #directories = [{ directory = appFolder; user = "kah"; group = "kah"; mode = "750"; }];
+    #};
 
 
     ## service

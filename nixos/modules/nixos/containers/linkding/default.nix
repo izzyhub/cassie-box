@@ -68,7 +68,8 @@ in
       restartUnits = [ "${app}.service" ];
     };
 
-    users.users.truxnell.extraGroups = [ group ];
+    users.users.cassie.extraGroups = [ group ];
+    users.users.izzy.extraGroups = [ group ];
 
 
     # Folder perms - only for containers
@@ -76,15 +77,15 @@ in
     # "d ${appFolder}/ 0750 ${user} ${group} -"
     # ];
 
-    environment.persistence."${config.mySystem.system.impermanence.persistPath}" = lib.mkIf config.mySystem.system.impermanence.enable {
-      directories = [{ directory = appFolder; user = "kah"; group = "kah"; mode = "750"; }];
-    };
+    #environment.persistence."${config.mySystem.system.impermanence.persistPath}" = lib.mkIf config.mySystem.system.impermanence.enable {
+      #directories = [{ directory = appFolder; user = "kah"; group = "kah"; mode = "750"; }];
+    #};
 
 
     virtualisation.oci-containers.containers."${app}" = {
       inherit image;
       environment = {
-        LD_SUPERUSER_NAME = "truxnell";
+        LD_SUPERUSER_NAME = "cassie";
       };
       environmentFiles = [
         config.sops.secrets."${category}/${app}/env".path

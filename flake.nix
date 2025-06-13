@@ -2,7 +2,8 @@
   description = "A very basic flake";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-24.11";
+    nixpkgs-unstable.url = "github:nixos/nixpkgs?ref=nixos-unstable";
 
     # impermanence
     # https://github.com/nix-community/impermanence
@@ -39,7 +40,14 @@
       url = "github:bluskript/nix-inspect";
     };
 
+    disko.url = "github:nix-community/disko";
+    disko.inputs.nixpkgs.follows = "nixpkgs";
 
+    # deploy-rs for deployment management
+    deploy-rs = {
+      url = "github:serokell/deploy-rs";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -47,7 +55,9 @@
     , nixpkgs
     , sops-nix
     , home-manager
-    , impermanence
+    , disko
+    , deploy-rs
+    #, impermanence
     , ...
     } @ inputs:
     let
@@ -61,7 +71,7 @@
     rec {
 
       # Use nixpkgs-fmt for 'nix fmt'
-      formatter = forAllSystems (system: nixpkgs.legacyPackages."${system}".nixpkgs-fmt);
+      #formatter = forAllSystems (system: nixpkgs.legacyPackages."${system}".nixpkgs-fmt);
 
       # extend lib with custom functions
       lib = nixpkgs.lib.extend (
@@ -86,8 +96,9 @@
             # basemodules is the base of the entire machine building
             # here we import all the modules and setup home-manager
             , baseModules ? [
+              disko.nixosModules.disko
               sops-nix.nixosModules.sops
-              sops-nix.nixosModules.sops
+          home-manager.nixosModules.home-manager
               ./nixos/profiles/global.nix # all machines get a global profile
               ./nixos/modules/nixos # all machines get nixos modules
               ./nixos/hosts/${hostname}   # load this host's config folder for machine-specific config
@@ -143,6 +154,23 @@
           ];
         };
       };
+
+      # Deploy-rs configuration
+      deploy = {
+        nodes = {
+          "cassie-box" = {
+            hostname = "cassie-box";  # Update this with actual hostname or IP
+            profiles = {
+              system = {
+                sshUser = "izzy";  # Update with appropriate user
+                path = deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations."cassie-box";
+              };
+            };
+          };
+        };
+      };
+      checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) deploy-rs.lib;
+
       top =
         let
           nixtop = nixpkgs.lib.genAttrs

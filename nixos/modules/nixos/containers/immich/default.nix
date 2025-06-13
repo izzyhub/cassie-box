@@ -85,7 +85,7 @@ in
     #       uid = 390;
     #     };
 
-    #     truxnell.extraGroups = [ "immich" ];
+    #     cassie.extraGroups = [ "immich" ];
     #     # Add admins to the immich group
     #   };
 
@@ -105,9 +105,9 @@ in
 
     ];
 
-    environment.persistence."${config.mySystem.system.impermanence.persistPath}" = lib.mkIf config.mySystem.system.impermanence.enable {
-      directories = [{ directory = appFolder; inherit user; inherit group; mode = "750"; }];
-    };
+    #environment.persistence."${config.mySystem.system.impermanence.persistPath}" = lib.mkIf config.mySystem.system.impermanence.enable {
+      #directories = [{ directory = appFolder; inherit user; inherit group; mode = "750"; }];
+    #};
 
     virtualisation.oci-containers.containers =
       {

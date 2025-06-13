@@ -33,6 +33,20 @@ with lib;
     default = "Production";
   };
 
+  options.mySystem.dataFolder = mkOption {
+    type = types.str;
+    description = "Data folder for shared storage";
+    default = "/mnt/data";
+  };
+
+  options.mySystem.system.impermanence = {
+    enable = mkOption {
+      type = types.bool;
+      default = false;
+      description = "Whether to enable impermanence";
+    };
+  };
+
   config = {
     systemd.tmpfiles.rules = [
       "d ${config.mySystem.persistentFolder} 777 - - -" #The - disables automatic cleanup, so the file wont be removed after a period

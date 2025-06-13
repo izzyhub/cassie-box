@@ -8,7 +8,6 @@
     ./searxng
     ./whoogle
     ./redlib
-    ./home-assistant
     ./calibre
     ./immich
     ./rxresume
@@ -16,10 +15,8 @@
     ./overseer
     ./changedetection
     ./linkding
-    ./autobrr
     ./filebrowser
-    ./maintainerr
-    ./cross-seed
     ./redbot
+    ./maintainerr
   ];
 }
