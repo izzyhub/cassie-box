@@ -34,6 +34,7 @@ with config;
         unzip
         fd
         ripgrep
+        neovim
       ];
 
       sessionVariables = {
