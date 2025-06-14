@@ -21,6 +21,7 @@ with lib;
     flake = "github:izzyhub/cassie-box";
     flags = [
       "-L" # print build logs
+      "--no-write-lock-file" # don't try to write lock file when updating from remote flake
     ];
     inherit (cfg) dates;
   };
