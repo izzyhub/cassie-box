@@ -11,7 +11,7 @@ with lib;
     enable = mkEnableOption "system autoUpgrade";
     dates = lib.mkOption {
       type = lib.types.str;
-      default = "Sun 03:00";
+      default = "hourly";
     };
 
 
