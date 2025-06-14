@@ -45,12 +45,6 @@
 
     colmena.url = "github:zhaofengli/colmena";
 
-    # deploy-rs for deployment management
-    deploy-rs = {
-      url = "github:serokell/deploy-rs";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     # nixos-generators for ISO generation
     nixos-generators = {
       url = "github:nix-community/nixos-generators";
@@ -64,7 +58,7 @@
     , sops-nix
     , home-manager
     , disko
-    , deploy-rs
+    , colmena
     , nixos-generators
     , impermanence
     , ...
@@ -217,22 +211,6 @@
             "$TARGET_HOST"
         '';
       });
-
-      # Deploy-rs configuration
-      deploy = {
-        nodes = {
-          "cassie-box" = {
-            hostname = "cassie-box";  # Update this with actual hostname or IP
-            profiles = {
-              system = {
-                sshUser = "izzy";  # Update with appropriate user
-                path = deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations."cassie-box";
-              };
-            };
-          };
-        };
-      };
-      checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) deploy-rs.lib;
 
       top =
         let

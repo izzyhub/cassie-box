@@ -20,7 +20,7 @@
               };
             };
             root = {
-              size = "50%";
+              size = "500G";
               content = {
                 type = "filesystem";
                 format = "ext4";
@@ -28,7 +28,7 @@
               };
             };
             data = {
-              size = "50%";
+              size = "498G";
               content = {
                 type = "filesystem";
                 format = "ext4";

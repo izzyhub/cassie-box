@@ -13,8 +13,8 @@ FLAKE_ATTR="${2:-cassie-box-installer}"
 
 if [ -z "$TARGET_HOST" ]; then
   echo "Usage: $0 <target-host> [flake-attr]"
-  echo "Example: $0 root@192.168.1.100"
-  echo "Example: $0 root@192.168.1.100 cassie-box-installer"
+  echo "Example: $0 root@192.168.1.140"
+  echo "Example: $0 root@192.168.1.140 cassie-box-installer"
   exit 1
 fi
 
