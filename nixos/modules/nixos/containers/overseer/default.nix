@@ -72,16 +72,6 @@ in
     users.users.cassie.extraGroups = [ group ];
 
 
-    # Folder perms - only for containers
-    systemd.tmpfiles.rules = [
-      "d ${appFolder}/ 0750 ${user} ${group} -"
-    ];
-
-    environment.persistence."${config.mySystem.persistentFolder}" = lib.mkIf config.mySystem.system.impermanence.enable {
-      directories = [{ directory = appFolder; inherit user; inherit group; mode = "750"; }];
-    };
-
-
     virtualisation.oci-containers.containers = config.lib.mySystem.mkContainer {
       inherit app image;
       user = "568";
@@ -151,6 +141,15 @@ in
     # };
 
 
+
+    # Create appFolder directory
+    systemd.tmpfiles.rules = [
+      "d ${appFolder} 0750 ${user} ${group} -"
+    ];
+
+    environment.persistence."${config.mySystem.persistentFolder}" = lib.mkIf config.mySystem.system.impermanence.enable {
+      directories = [{ directory = appFolder; inherit user; inherit group; mode = "750"; }];
+    };
 
   };
 }

@@ -22,7 +22,7 @@ with lib;
     mySystem = {
 
       # basics for all devices
-      time.timeZone = "American/New_York";
+      time.timeZone = "America/New_York";
       security.increaseWheelLoginLimits = true;
       system.packages = [ pkgs.bat ];
       domain = "cassies.app";
@@ -44,7 +44,10 @@ with lib;
       parted
       smartmontools
       comma
+      tailscale
     ];
+
+    services.tailscale.enable = true;
 
     networking.useDHCP = lib.mkDefault true;
     networking.domain = config.mySystem.domain;

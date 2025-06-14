@@ -35,7 +35,7 @@ in
       };
       volumes = [
         "${appFolder}:/config:rw"
-        "${config.mySystem.dataFolder}/natflix:/media:rw"
+        "${config.mySystem.dataFolder}/media:/media:rw"
         "/etc/localtime:/etc/localtime:ro"
       ];
     };

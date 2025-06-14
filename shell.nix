@@ -46,5 +46,6 @@ pkgs.mkShell {
     pre-commit
     gitleaks
     mkdocs
+    tailscale
   ];
 }

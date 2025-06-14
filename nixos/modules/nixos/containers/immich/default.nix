@@ -22,6 +22,7 @@ let
     REDIS_HOSTNAME = "immich-redis";
     IMMICH_METRICS = "true";
   };
+  dataFolder = "${config.mySystem.dataFolder}";
 in
 {
   options.mySystem.${category}.${app} =
@@ -117,7 +118,7 @@ in
           inherit environment;
           volumes = [
             "/etc/localtime:/etc/localtime:ro"
-            "/zfs/photos/immich/:/usr/src/app/upload"
+            "${dataFolder}/photos/immich/:/usr/src/app/upload"
           ];
           dependsOn = [ "immich-redis" "immich-postgres" ];
           ports = [ "${builtins.toString port}:${builtins.toString port}" ];
@@ -136,7 +137,7 @@ in
           image = "ghcr.io/immich-app/immich-machine-learning:v1.125.7";
           inherit environment;
           volumes = [
-            "/zfs/photos/immich/:/usr/src/app/upload"
+            "${dataFolder}/photos/immich/:/usr/src/app/upload"
             "/var/lib/immich/machine-learning:/cache"
           ];
           extraOptions = [

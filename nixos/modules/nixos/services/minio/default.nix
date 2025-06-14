@@ -18,6 +18,7 @@ let
   persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
   host = "${app}" + (if cfg.dev then "-dev" else "");
   url = "${host}.${config.networking.domain}";
+  dataFolder = "${config.mySystem.dataFolder}";
 in
 {
   options.mySystem.${category}.${app} =
@@ -54,9 +55,6 @@ in
           description = "Enable backups";
           default = true;
         };
-
-
-
     };
 
   config = mkIf cfg.enable {
@@ -92,14 +90,14 @@ in
       consoleAddress = "0.0.0.0:${builtins.toString port}";
       region = "us-east-1";
       rootCredentialsFile = "${config.sops.secrets."${category}/${app}/env".path}";
-      dataDir = [ "/zfs/minio" ];
+      dataDir = [ "${dataFolder}/minio" ];
       configDir = "/var/lib/${app}";
     };
 
     systemd.services.minio = {
       environment = {
-        MINIO_SERVER_URL = "https://s3.trux.dev";
-        MINIO_BROWSER_REDIRECT_URL = "https://minio.trux.dev";
+        MINIO_SERVER_URL = "https://s3.cassies.app";
+        MINIO_BROWSER_REDIRECT_URL = "https://minio.cassies.app";
       };
     };
 

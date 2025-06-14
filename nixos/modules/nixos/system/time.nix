@@ -10,7 +10,7 @@ in
     timeZone = lib.mkOption {
       type = lib.types.str;
       description = "Timezone of system";
-      default = "American/New_York";
+      default = "America/New_York";
     };
     hwClockLocalTime = lib.mkOption {
       type = lib.types.bool;

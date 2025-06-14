@@ -118,3 +118,24 @@ tasks:
     silent: true
     cmds:
       - nix build .#images.rpi4
+
+  build-iso:
+    desc: Build installation ISO for cassie-box
+    silent: true
+    cmds:
+      - echo "Building installation ISO..."
+      - nix build .#packages.x86_64-linux.iso -o ./result-iso
+      - echo "ISO built successfully at $(readlink -f ./result-iso)"
+
+  install-anywhere:
+    desc: Install cassie-box using nixos-anywhere
+    requires:
+      vars:
+        - target
+    cmds:
+      - echo "Installing cassie-box to {{ .target }}..."
+      - task: .prompt_to_continue
+      - ./install-nixos-anywhere.sh {{ .target }}
+    preconditions:
+      - sh: which nix
+        msg: "nix not found"

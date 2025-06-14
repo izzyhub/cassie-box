@@ -17,7 +17,7 @@ in
         enable = true;
 
         dockerCompat = true;
-        extraPackages = [ pkgs.zfs ];
+        #extraPackages = [ pkgs.zfs ];
 
         # regular cleanup
         autoPrune.enable = true;

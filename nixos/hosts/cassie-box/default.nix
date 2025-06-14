@@ -3,62 +3,10 @@
 , pkgs
 , ...
 }: {
-  disko.devices = {
-    disk = {
-      main = {
-        device = "/dev/disk/by-id/ata-CT2000BX500SSD1_2425E8B9A602";
-        type = "disk";
-        content = {
-          type = "gpt";
-          partitions = {
-            ESP = {
-              type = "EF00";
-              size = "1G";
-              content = {
-                type = "filesystem";
-                format = "vfat";
-                mountpoint = "/boot";
-                mountOptions = [ "umask=0077" ];
-              };
-            };
-            root = {
-              size = "50%";
-              content = {
-                type = "filesystem";
-                format = "ext4";
-                mountpoint = "/";
-              };
-            };
-            data = {
-              size = "50%";
-              content = {
-                type = "filesystem";
-                format = "ext4";
-                mountpoint = "/mnt/data1";
-              };
-            };
-          };
-        };
-      };
-      disk2 = {
-        device = "/dev/disk/by-id/nvme-WD_BLACK_SN770_2TB_241958806974";
-        type = "disk";
-        content = {
-          type = "gpt";
-          partitions = {
-            main = {
-              size = "100%";
-              content = {
-                type = "filesystem";
-                format = "ext4";
-                mountpoint = "/mnt/data2";
-              };
-            };
-          };
-        };
-      };
-    };
-  };
+  # Import disko configuration
+  imports = [
+    ./disko.nix
+  ];
 
   # Create directories for mergerfs
   systemd.tmpfiles.rules = [
@@ -66,6 +14,16 @@
     "d /mnt/data2 0755 root root -"
     "d /mnt/data 0755 root root -"
   ];
+
+  #fileSystems."/" = {
+  #device = "6dc22d81-e932-42f3-9b38-7f5d7e14a1fe";
+  #fsType = "ext4";
+  #};
+  #fileSystems."/boot" = {
+  #device = "/dev/disk/by-uuid/53A5-AD6F";
+  #fsType = "vfat";
+  #options = ["fmaks=022" "dmask=0022" ];
+  #};
 
   # Add mergerfs configuration
   fileSystems."/mnt/data" = {
@@ -85,6 +43,7 @@
   mySystem.purpose = "Cassie Services";
   mySystem.system.impermanence.enable = true;
   mySystem.system.autoUpgrade.enable = true; # bold move cotton
+  mySystem.dataFolder = "/mnt/data";
   mySystem.services = {
     openssh.enable = true;
     podman.enable = true;
@@ -122,7 +81,7 @@
     filebrowser.enable = true;
     syncthing = {
       enable = true;
-      syncPath = "/zfs/syncthing/";
+      syncPath = "/mnt/data/syncthing/";
     };
     navidrome.enable = true;
     paperless.enable = true;
@@ -147,7 +106,6 @@
 
   mySystem.persistentFolder = "/persist";
   mySystem.system.motd.networkInterfaces = [ "enp1s0" ];
-  mySystem.dataFolder = "/mnt/data";
 
   # Intel qsv
   boot.kernelParams = [

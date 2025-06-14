@@ -17,6 +17,7 @@ let
   persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
   host = "${app}" + (if cfg.dev then "-dev" else "");
   url = "${host}.${config.networking.domain}";
+  dataFolder = "${config.mySystem.dataFolder}";
 in
 {
   options.mySystem.${category}.${app} =
@@ -102,8 +103,7 @@ in
       };
       volumes = [
         "${appFolder}:/config:rw"
-        "/tank:/srv/tank:rw"
-        "/zfs:/srv/zfs:rw"
+        "/data:/data:rw"
         "/etc/localtime:/etc/localtime:ro"
       ];
     };

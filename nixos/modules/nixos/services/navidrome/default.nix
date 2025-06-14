@@ -88,7 +88,7 @@ in
         settings = {
           Address = "0.0.0.0";
           Port = 4533;
-          MusicFolder = "${config.mySystem.dataFolder}/natflix/music";
+          MusicFolder = "${config.mySystem.dataFolder}/media/music";
           CovertArtPriority = "*.jpg, *.JPG, *.png, *.PNG, embedded";
           AutoImportPlaylists = false;
           EnableSharing = true;

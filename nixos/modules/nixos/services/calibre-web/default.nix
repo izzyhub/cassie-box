@@ -80,7 +80,7 @@ in
       listen.ip = "0.0.0.0";
       listen.port = port;
       options = {
-        calibreLibrary = "${config.mySystem.dataFolder}/natflix/books/";
+        calibreLibrary = "${config.mySystem.dataFolder}/media/books/";
       };
     };
 

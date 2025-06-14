@@ -43,9 +43,17 @@
     disko.url = "github:nix-community/disko";
     disko.inputs.nixpkgs.follows = "nixpkgs";
 
+    colmena.url = "github:zhaofengli/colmena";
+
     # deploy-rs for deployment management
     deploy-rs = {
       url = "github:serokell/deploy-rs";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # nixos-generators for ISO generation
+    nixos-generators = {
+      url = "github:nix-community/nixos-generators";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
@@ -57,6 +65,7 @@
     , home-manager
     , disko
     , deploy-rs
+    , nixos-generators
     , impermanence
     , ...
     } @ inputs:
@@ -154,7 +163,60 @@
               }
           ];
         };
+
+        # Installation configuration for nixos-anywhere
+        "cassie-box-installer" = mkNixosConfig {
+          hostname = "cassie-box";
+          system = "x86_64-linux";
+          hardwareModules = [
+            ./nixos/profiles/hw-generic-x86.nix
+          ];
+          profileModules = [
+            ./nixos/profiles/installer.nix
+            ./nixos/hosts/cassie-box/disko.nix
+          ];
+          baseModules = [
+            disko.nixosModules.disko
+            sops-nix.nixosModules.sops
+            impermanence.nixosModules.impermanence
+            ./nixos/profiles/global.nix
+            ./nixos/modules/nixos
+          ];
+        };
       };
+
+      # Packages for ISO generation and installation helpers
+      packages = forAllSystems (system: {
+        # Generate installation ISO
+        iso = nixos-generators.nixosGenerate {
+          inherit system;
+          modules = [
+            ./nixos/profiles/iso-installer.nix
+          ];
+          format = "iso";
+        };
+
+        # Install script for nixos-anywhere
+        install-script = nixpkgs.legacyPackages.${system}.writeShellScriptBin "install-cassie-box" ''
+          #!/usr/bin/env bash
+          set -euo pipefail
+
+          TARGET_HOST="''${1:-}"
+
+          if [ -z "$TARGET_HOST" ]; then
+            echo "Usage: $0 <target-host>"
+            echo "Example: $0 root@192.168.1.100"
+            exit 1
+          fi
+
+          echo "Installing cassie-box to $TARGET_HOST..."
+
+          ${nixpkgs.legacyPackages.${system}.nixos-anywhere}/bin/nixos-anywhere \
+            --flake .#cassie-box-installer \
+            --disk-encryption-keys /tmp/secret.key <(echo "your-disk-encryption-key-here") \
+            "$TARGET_HOST"
+        '';
+      });
 
       # Deploy-rs configuration
       deploy = {

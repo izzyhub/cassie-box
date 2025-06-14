@@ -25,6 +25,14 @@ task nix:deploy-single  # Deploy to remote host
 task nix:deploy-all     # Deploy to all configured hosts
 ```
 
+### Installation
+```bash
+task nix:build-iso      # Build installation ISO
+task nix:install-anywhere target=root@192.168.1.100  # Install via nixos-anywhere
+./build-iso.sh          # Alternative: build ISO directly
+./install-nixos-anywhere.sh root@192.168.1.100       # Alternative: install directly
+```
+
 ### Secret Management
 ```bash
 task sop:encrypt        # Encrypt new sops secrets

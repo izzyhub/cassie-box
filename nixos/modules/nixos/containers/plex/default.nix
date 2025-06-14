@@ -36,8 +36,7 @@ in
       user = "568:568";
       volumes = [
         "${appFolder}:/config:rw"
-        "${config.mySystem.dataFolder}/natflix:/data:rw"
-        "/zfs/backup/kubernetes/apps/plex:/config/backup:rw" # TODO fix backup path with var.
+        "${config.mySystem.dataFolder}/media:/data:rw"
         "/dev/dri:/dev/dri" # for hardware transcoding
         "/etc/localtime:/etc/localtime:ro"
       ];

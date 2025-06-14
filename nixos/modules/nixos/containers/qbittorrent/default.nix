@@ -52,8 +52,8 @@ in
         ports = [ "${builtins.toString qbit_port}:${builtins.toString qbit_port}" ];
         volumes = [
           "${appFolder}:/config:rw"
-          "${dataFolder}/downloads/qbittorrent:${dataFolder}/downloads/qbittorrent:rw"
-          "/mnt/cache:/cache"
+          "${dataFolder}/torrents/:${dataFolder}/downloads/qbittorrent:rw"
+          "${appFolder}/qbittorrent-cache:/cache"
           "/etc/localtime:/etc/localtime:ro"
         ];
       };

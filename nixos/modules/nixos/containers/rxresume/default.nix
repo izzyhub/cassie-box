@@ -59,43 +59,33 @@ in
     };
 
   config = mkIf cfg.enable {
-
-    ## Secrets
-    sops.secrets."${category}/${app}/env" = {
-      sopsFile = ./secrets.sops.yaml;
-      owner = user;
-      inherit group;
-      restartUnits = [ "${app}.service" ];
-    };
-
-    # enable browserless container on this system
-    mySystem.services.browserless-chrome.enable = true;
-
-    users.users.izzy.extraGroups = [ (builtins.toString config.users.groups.rxresume.gid) ];
-    users.users.cassie.extraGroups = [ (builtins.toString config.users.groups.rxresume.gid) ];
-
-    users.users = {
-      rxresume = {
-        group = "rxresume";
-        home = "/var/lib/rxresume/";
-        uid = 319;
+      ## Secrets
+      sops.secrets."${category}/${app}/env" = {
+        sopsFile = ./secrets.sops.yaml;
+        owner = user;
+        inherit group;
+        restartUnits = [ "${app}.service" ];
       };
-    };
 
-    users.groups = {
-      rxresume.gid = 319;
-    };
+      # enable browserless container on this system
+      mySystem.services.browserless-chrome.enable = true;
 
-    # Folder perms - only for containers
-    systemd.tmpfiles.rules = [
-      "d ${appFolder}/ 0750 ${user} ${group} -"
-    ];
+      users.users.izzy.extraGroups = [ (builtins.toString config.users.groups.rxresume.gid) ];
+      users.users.cassie.extraGroups = [ (builtins.toString config.users.groups.rxresume.gid) ];
 
-    environment.persistence."${config.mySystem.persistentFolder}" = lib.mkIf config.mySystem.system.impermanence.enable {
-      directories = [{ directory = appFolder; inherit user; inherit group; mode = "750"; }];
-    };
+      users.users = {
+        rxresume = {
+          group = "rxresume";
+          home = "/var/lib/rxresume/";
+          uid = 319;
+        };
+      };
 
-    virtualisation.oci-containers.containers = config.lib.mySystem.mkContainer {
+      users.groups = {
+        rxresume.gid = 319;
+      };
+
+      virtualisation.oci-containers.containers = config.lib.mySystem.mkContainer {
       inherit app image;
       user = "0"; # :(
       group = "0"; # :(
@@ -199,6 +189,15 @@ in
 
     services.postgresqlBackup = {
       databases = [ app ];
+    };
+
+    # Create appFolder directory
+    systemd.tmpfiles.rules = [
+      "d ${appFolder} 0750 ${user} ${group} -"
+    ];
+
+    environment.persistence."${config.mySystem.persistentFolder}" = lib.mkIf config.mySystem.system.impermanence.enable {
+      directories = [{ directory = appFolder; inherit user; inherit group; mode = "750"; }];
     };
 
   };

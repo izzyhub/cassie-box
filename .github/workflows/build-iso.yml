@@ -1,0 +1,33 @@
+---
+name: Build Installation ISO
+
+on:
+  workflow_dispatch:  # Manual trigger
+  push:
+    paths:
+      - 'nixos/**'
+      - 'flake.nix'
+      - 'flake.lock'
+
+jobs:
+  build-iso:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v24
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: Build ISO
+        run: |
+          nix build .#packages.x86_64-linux.iso -o result-iso
+
+      - name: Upload ISO
+        uses: actions/upload-artifact@v4
+        with:
+          name: cassie-box-installer-iso
+          path: result-iso
+          retention-days: 30

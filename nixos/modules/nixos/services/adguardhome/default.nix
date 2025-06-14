@@ -75,7 +75,7 @@ in
           upstream_dns = [
 
             # resolve fqdn for local ip's
-            "[/l.voltaicforge.com/]10.8.10.1"
+            "[/l.cassies.app/]10.8.10.1"
 
             # reverse dns setup
             "[/in-addr.arpa/]10.8.10.1" # reverse dns lookup to UDMP

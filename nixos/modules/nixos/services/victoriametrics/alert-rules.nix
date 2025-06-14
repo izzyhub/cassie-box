@@ -39,16 +39,6 @@ lib.mapAttrsToList
     description = "{{$labels.host}} just rebooted";
   };
 
-  zfs_errors = {
-    condition = "zfs_arcstats_l2_io_error + zfs_dmu_tx_error + zfs_arcstats_l2_writes_error > 0";
-    description = "{{$labels.instance}} reports: {{$value}} ZFS IO errors";
-  };
-
-  zpool_status = {
-    condition = "zpool_status_errors > 0";
-    description = "{{$labels.instance}} reports: zpool {{$labels.name}} has {{$value}} errors";
-  };
-
   unusual_disk_read_latency = {
     condition = "rate(diskio_read_time[1m]) / rate(diskio_reads[1m]) > 0.1 and rate(diskio_reads[1m]) > 0";
     description = "{{$labels.instance}}: Disk latency is growing (read operations > 100ms)";

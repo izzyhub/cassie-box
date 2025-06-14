@@ -100,7 +100,7 @@ in
       ];
       volumes = [
         "${appFolder}:/data:rw"
-        "/tank/natflix/music:/music/localtracks:ro"
+        "${appFolder}/music:/music/localtracks:ro"
       ];
       extraOptions = [ "--cap-add=SYS_NICE" ];
     };

@@ -19,6 +19,7 @@ let
   url = "${host}.${config.networking.domain}";
   tikaPort = "33001";
   gotenbergPort = "33002";
+  dataFolder = "${config.mySystem.dataFolder}";
 in
 {
   options.mySystem.${category}.${app} =
@@ -103,8 +104,8 @@ in
     services.paperless = {
       enable = true;
       dataDir = "/var/lib/paperless";
-      mediaDir = "/zfs/documents/paperless/media";
-      consumptionDir = "/zfs/documents/paperless/inbound";
+      mediaDir = "${dataFolder}/documents/paperless/media";
+      consumptionDir = "/${dataFolder}/documents/paperless/inbound";
       consumptionDirIsPublic = true;
       port = 8000;
       address = "localhost";

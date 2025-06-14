@@ -22,7 +22,7 @@ in
 
     # TODO add notifications on IP change
     # init secret
-    sops.secrets."system/networking/cloudflare-dyndns/apiTokenFile".sopsFile = ./cloudflare-dyndns.sops.yaml;
+    sops.secrets."system/networking/cloudflare-dyndns/apiTokenFile".sopsFile = ./secrets.sops.yaml;
 
     # Restart when secret changes
     sops.secrets."system/networking/cloudflare-dyndns/apiTokenFile".restartUnits = [ "cloudflare-dyndns.service" ];
