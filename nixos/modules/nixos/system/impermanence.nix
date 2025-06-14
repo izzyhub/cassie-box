@@ -27,14 +27,32 @@ with lib;
 
 
   config = lib.mkIf cfg.enable {
+    # Create media group for data access
+    users.groups.media = {};
+    users.users.izzy.extraGroups = [ "media" ];
+    users.users.cassie.extraGroups = [ "media" ];
+
     # move ssh keys
 
     systemd.tmpfiles.rules = [
       # Fix permissions for systemd DynamicUser services
-      "d /var/lib/private 0700 root root -"
+      "Z /var/lib/private 0700 root root -" # Use Z to recursively fix permissions
     ] ++ (mkIf config.services.openssh.enable [
       # Ensure SSH directory exists in persistent storage
       "d ${cfg.persistPath}/etc/ssh 0755 root root -"
+    ]) ++ (mkIf (config.mySystem.dataFolder != null) [
+      # Create common data directories with media group ownership
+      "d ${config.mySystem.dataFolder} 0775 root media -"
+      "d ${config.mySystem.dataFolder}/media 0775 root media -"
+      "d ${config.mySystem.dataFolder}/media/music 0775 root media -"
+      "d ${config.mySystem.dataFolder}/documents 0775 root media -"
+      "d ${config.mySystem.dataFolder}/documents/paperless 0775 root media -"
+      "d ${config.mySystem.dataFolder}/documents/paperless/media 0775 root media -"
+      "d ${config.mySystem.dataFolder}/documents/paperless/inbound 0775 root media -"
+      "d ${config.mySystem.dataFolder}/photos 0775 root media -"
+      "d ${config.mySystem.dataFolder}/photos/immich 0775 root media -"
+      "d ${config.mySystem.dataFolder}/torrents 0775 root media -"
+      "d ${config.mySystem.dataFolder}/syncthing 0775 root media -"
     ]);
 
     # Generate SSH host keys in persistent location if they don't exist
