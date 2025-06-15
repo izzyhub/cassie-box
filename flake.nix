@@ -5,6 +5,12 @@
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-24.11";
     nixpkgs-unstable.url = "github:nixos/nixpkgs?ref=nixos-unstable";
 
+    lix-module = {
+      url = "https://git.lix.systems/lix-project/nixos-module/archive/2.93.0.tar.gz";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+
     # impermanence
     # https://github.com/nix-community/impermanence
     impermanence.url = "github:nix-community/impermanence";
@@ -61,6 +67,7 @@
     , colmena
     , nixos-generators
     , impermanence
+    , lix-module
     , ...
     } @ inputs:
     let
@@ -114,6 +121,8 @@
                   };
                 };
               }
+              # Add Lix module
+              lix-module.nixosModules.default
             ]
             , profileModules ? [ ]
             }:
