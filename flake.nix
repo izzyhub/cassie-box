@@ -119,6 +119,8 @@
                   extraSpecialArgs = {
                     inherit inputs hostname system;
                   };
+                  # Enable automatic backups for Home Manager
+                  backupFileExtension = "backup";
                 };
               }
               # Add Lix module

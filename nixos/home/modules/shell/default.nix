@@ -8,6 +8,9 @@
   ];
 
   config = {
-    myHome.shell.zsh.enable = true;
+    # Only enable fish by default
+    myHome.shell.fish.enable = true;
+    myHome.shell.zsh.enable = false;
+    myHome.shell.starship.enable = true;
   };
 }

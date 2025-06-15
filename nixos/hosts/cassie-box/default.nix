@@ -98,6 +98,10 @@
     silverbullet.enable=true;
     tandoor.enable=true;
 
+    jellyfin = {
+      enable = true;
+    };
+
     invidious.enable = true;
     thelounge.enable = true;
     changedetection.enable = true;
@@ -107,6 +111,7 @@
     # monitoring
     victoriametrics.enable = true;
     grafana.enable = true;
+    #cockpit.enable = true;
   };
   mySystem.security.acme.enable = true;
   mySystem.containers = {
@@ -124,9 +129,16 @@
     enable = true;
     extraPackages = with pkgs; [
       intel-media-driver
+      libva-vdpau-driver
       intel-compute-runtime
+      vpl-gpu-rt
+      intel-media-sdk
+      intel-ocl
     ];
   };
+
+  # Enable firmware for Intel GPU
+  hardware.enableAllFirmware = true;
 
   boot = {
 

@@ -45,7 +45,7 @@ in
     backup = mkOption {
       type = lib.types.bool;
       description = "Enable backups";
-      default = false;
+      default = true;
     };
   };
 

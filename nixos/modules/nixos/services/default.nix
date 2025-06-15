@@ -39,5 +39,6 @@
     ./silverbullet
     ./tandoor
     ./vaultwarden
+    ./jellyfin
   ];
 }
