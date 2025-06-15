@@ -6,6 +6,27 @@
 with lib;
 let
   cfg = config.mySystem.services.nginx;
+
+  # Service mapping for automatic virtual host generation
+  # Only include services that don't have manual nginx configs
+  serviceMap = {
+    # Most services already have manual nginx configs, so this is disabled for now
+    # to avoid conflicts. Individual services handle their own nginx configuration.
+  };
+
+  # Generate virtual hosts for enabled services (as defaults - can be overridden)
+  autoVirtualHosts = mapAttrs' (serviceName: serviceConfig: {
+    name = "${serviceName}.${config.networking.domain}";
+    value = mkDefault {
+      forceSSL = true;
+      useACMEHost = config.networking.domain;
+      locations."^~ /" = mkDefault {
+        proxyPass = "http://${serviceConfig.host}:${toString serviceConfig.port}";
+        proxyWebsockets = true;
+        extraConfig = mkIf (serviceConfig.host != "127.0.0.1") "resolver 10.88.0.1;";
+      };
+    };
+  }) (filterAttrs (name: _: config.mySystem.services.${name}.enable or false) serviceMap);
 in
 {
   options.mySystem.services.nginx.enable = mkEnableOption "nginx";
@@ -48,7 +69,7 @@ in
       # provide default host with returning error
       # else nginx returns the first server
       # in the config file... >:S
-      virtualHosts = {
+      virtualHosts = autoVirtualHosts // {
         "_" = {
           default = true;
           forceSSL = true;

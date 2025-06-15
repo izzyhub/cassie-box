@@ -8,14 +8,18 @@ This is a NixOS configuration repository for "cassie-box", a home media server a
 
 ## Common Commands
 
+**IMPORTANT**: This development machine does not have Nix installed. All configuration testing must be done on the remote cassie-box system via SSH.
+
 ### Development and Testing
 ```bash
-task build               # Build configuration and show differences
-task nix:dry-run        # Show what would change without applying
-task nix:test           # Test configuration without applying
-task test-all           # Run comprehensive testing suite
-task check              # Run linting and pre-commit checks
-task format             # Format nix files with nixpkgs-fmt
+# LOCAL COMMANDS (development machine)
+task check              # Run linting and pre-commit checks (if available)
+task format             # Format nix files with nixpkgs-fmt (if available)
+
+# REMOTE COMMANDS (via SSH to cassie-box)
+ssh izzy@cassie-box "sudo nixos-rebuild dry-run --flake /etc/nixos#cassie-box"  # Show what would change
+ssh izzy@cassie-box "sudo nixos-rebuild test --flake /etc/nixos#cassie-box"     # Test without switching
+ssh izzy@cassie-box "sudo nixos-rebuild switch --flake /etc/nixos#cassie-box"   # Apply changes
 ```
 
 ### Deployment
@@ -102,3 +106,6 @@ All services follow a consistent pattern using the `mySystem` namespace:
 - `nixos/hosts/cassie-box/default.nix`: Host configuration
 - `nixos/lib/default.nix`: Custom library functions including `mkService`
 - `.sops.yaml`: SOPS configuration for secret encryption
+
+## Memories
+- Do not disable any services without confirmation

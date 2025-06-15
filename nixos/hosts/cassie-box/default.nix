@@ -41,7 +41,7 @@
   };
 
   mySystem.purpose = "Cassie Services";
-  mySystem.system.impermanence.enable = true;
+  mySystem.system.impermanence.enable = false;
   mySystem.system.autoUpgrade.enable = true; # bold move cotton
   mySystem.dataFolder = "/mnt/data";
   mySystem.services = {
@@ -52,6 +52,13 @@
     postgresql.enable = true;
     mariadb.enable = true;
     nginx.enable = true;
+
+    # Dynamic DNS - disabled for internal-only setup
+    # cfDdns.enable = true;
+
+    # cloudflare-tunnel = {
+    #   enable = false;  # Disabled - using internal-only setup with Tailscale
+    # };
 
     homepage.enable = true;
 
@@ -157,10 +164,6 @@
       };
       "documents" = {
         "path" = "/mnt/data/documents";
-        "read only" = "no";
-      };
-      "nasflix" = {
-        "path" = "/mnt/data/media";
         "read only" = "no";
       };
       "paperless" = {

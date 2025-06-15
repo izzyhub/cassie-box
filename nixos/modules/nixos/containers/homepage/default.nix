@@ -18,7 +18,7 @@ let
   # TODO refactor out this sht
   settings =
     {
-      title = "NatFlix";
+      title = "Cassie's Apps";
       theme = "dark";
       color = "slate";
       showStats = true;
@@ -46,16 +46,11 @@ let
     {
       Administration = [
         { Source = [{ icon = "github.png"; href = "https://github.com/izzyhub/cassie-box"; }]; }
-        { Cloudflare = [{ icon = "cloudflare.png"; href = "https://dash.cloudflare.com/"; }]; }
       ];
     }
     {
       Development = [
         { CyberChef = [{ icon = "cyberchef.png"; href = "https://gchq.github.io/CyberChef/"; }]; }
-        { "Nix Options Search" = [{ abbr = "NS"; href = "https://search.nixos.org/packages"; }]; }
-        { "Doppler Secrets" = [{ abbr = "DP"; href = "https://dashboard.doppler.com"; }]; }
-        { "onedr0p Containers" = [{ abbr = "OC"; href = "https://github.com/onedr0p/containers"; }]; }
-        { "bjw-s Containers" = [{ abbr = "BC"; href = "https://github.com/bjw-s/container-images"; }]; }
 
       ];
     }
@@ -75,6 +70,13 @@ let
       };
     }
     {
+      resources = {
+        disk = "/mnt/data";
+        units = "metric";
+        label = "data";
+      };
+    }
+    {
       datetime = {
         text_size = "l";
         locale = "au";
@@ -87,9 +89,9 @@ let
     }
     {
       openmeteo = {
-        label = "Melbourne";
-        latitude = "-37.8136";
-        longitude = "144.9631";
+        label = "Fairfax";
+        latitude = "38.8460";
+        longitude = "77.3053";
         timezone = config.time.timeZone;
         units = "metric";
         cache = 5;
@@ -202,6 +204,7 @@ in
     virtualisation.oci-containers.containers.${app} = {
       image = "${image}";
       user = "568:568";
+      ports = [ "127.0.0.1:${builtins.toString port}:${builtins.toString port}" ];
 
       environment = {
         UMASK = "002";
@@ -248,9 +251,7 @@ in
       useACMEHost = config.networking.domain;
       forceSSL = true;
       locations."^~ /" = {
-        proxyPass = "http://${app}:${builtins.toString port}";
-        extraConfig = "resolver 10.88.0.1;";
-
+        proxyPass = "http://127.0.0.1:${builtins.toString port}";
       };
     };
 

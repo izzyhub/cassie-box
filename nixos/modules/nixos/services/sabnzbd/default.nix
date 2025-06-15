@@ -11,7 +11,7 @@ let
   description = "Movie organisar";
   user = "kah"; #string
   group = "kah"; #string
-  port = 9875; #int
+  port = 8080; #int
   appFolder = "/var/lib/${app}";
   persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
   host = "${app}" + (if cfg.dev then "-dev" else "");

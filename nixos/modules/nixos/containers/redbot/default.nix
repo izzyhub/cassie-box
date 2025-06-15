@@ -14,6 +14,7 @@ let
   group = "568"; #string
   # port = ; #int
   appFolder = "/var/lib/${app}";
+  dataFolder = "${config.mySystem.dataFolder}";
   persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
   host = "${app}" + (if cfg.dev then "-dev" else "");
   url = "${host}.${config.networking.domain}";
@@ -100,7 +101,7 @@ in
       ];
       volumes = [
         "${appFolder}:/data:rw"
-        "${appFolder}/music:/music/localtracks:ro"
+        "${dataFolder}/media/music:/music/localtracks:ro"
       ];
       extraOptions = [ "--cap-add=SYS_NICE" ];
     };

@@ -103,7 +103,7 @@ in
       };
       volumes = [
         "${appFolder}:/config:rw"
-        "/data:/data:rw"
+        "${dataFolder}:/data:rw"
         "/etc/localtime:/etc/localtime:ro"
       ];
     };

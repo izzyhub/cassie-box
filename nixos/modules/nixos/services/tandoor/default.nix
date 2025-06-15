@@ -12,9 +12,9 @@ let
   # image = "";
   user = "568"; #string
   group = "568"; #string
-  inherit (config.services.tandoor-recipes) port; #int
+  port = config.services.tandoor-recipes.port; #int
   appFolder = "/var/lib/private/tandor-recipes/";
-  persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
+  # persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
   host = "${app}" + (if cfg.dev then "-dev" else "");
   url = "${host}.${config.networking.domain}";
 in
@@ -69,7 +69,6 @@ in
     # };
 
     users.users.izzy.extraGroups = [ group ];
-    users.users.cassie.extraGroups = [ group ];
 
 
     # Folder perms - only for containers
@@ -77,7 +76,7 @@ in
     # "d ${appFolder}/ 0750 ${user} ${group} -"
     # ];
 
-    environment.persistence."${config.mySystem.persistentFolder}" = lib.mkIf config.mySystem.system.impermanence.enable {
+    environment.persistence."${config.mySystem.system.impermanence.persistPath}" = lib.mkIf config.mySystem.system.impermanence.enable {
       directories = [{ directory = appFolder; inherit user; inherit group; mode = "750"; }];
     };
 
@@ -88,9 +87,6 @@ in
       extraConfig = {
         GUNICORN_MEDIA = "0";
       };
-      package = pkgs.tandoor-recipes.overrideAttrs (old: {
-        doCheck = false;
-      });
     };
 
 
@@ -112,7 +108,7 @@ in
         group = "${category}";
         url = "https://${url}";
         interval = "1m";
-        conditions = [ "[CONNECTED] == true" "[STATUS] == 200" "[RESPONSE_TIME] < 50" ];
+        conditions = [ "[CONNECTED] == true" "[STATUS] == 200" "[RESPONSE_TIME] < 1500" ];
       }
     ];
 
@@ -127,7 +123,6 @@ in
       locations."/media/".alias = "/var/lib/tandoor-recipes/"; # needed to show images
       locations."^~ /" = {
         proxyPass = "http://127.0.0.1:${builtins.toString port}";
-        extraConfig = "resolver 10.88.0.1;";
       };
     };
 

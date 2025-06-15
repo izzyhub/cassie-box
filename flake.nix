@@ -101,7 +101,6 @@
             , baseModules ? [
               disko.nixosModules.disko
               sops-nix.nixosModules.sops
-              impermanence.nixosModules.impermanence
               home-manager.nixosModules.home-manager
               ./nixos/profiles/global.nix # all machines get a global profile
               ./nixos/modules/nixos # all machines get nixos modules
@@ -172,7 +171,6 @@
           baseModules = [
             disko.nixosModules.disko
             sops-nix.nixosModules.sops
-            impermanence.nixosModules.impermanence
             ./nixos/profiles/global.nix
             ./nixos/modules/nixos
           ];

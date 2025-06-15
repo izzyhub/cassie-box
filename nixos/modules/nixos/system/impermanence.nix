@@ -8,39 +8,62 @@ let
 in
 with lib;
 {
-  options.mySystem.system.impermanence = {
-    enable = mkEnableOption "system impermanence";
-    rootBlankSnapshotName = lib.mkOption {
-      type = lib.types.str;
-      default = "blank";
-    };
-    rootPoolName = lib.mkOption {
-      type = lib.types.str;
-      default = "rpool/local/root";
-    };
-    persistPath = lib.mkOption {
-      type = lib.types.str;
-      default = "/persist";
-    };
+  options.mySystem.system.impermanence.rootBlankSnapshotName = lib.mkOption {
+    type = lib.types.str;
+    default = "blank";
+  };
+  options.mySystem.system.impermanence.rootPoolName = lib.mkOption {
+    type = lib.types.str;
+    default = "rpool/local/root";
+  };
+  options.mySystem.system.impermanence.persistPath = lib.mkOption {
+    type = lib.types.str;
+    default = "/persist";
+  };
 
+  # Declare environment.persistence option for compatibility
+  options.environment.persistence = lib.mkOption {
+    type = lib.types.attrsOf (lib.types.submodule {
+      options = {
+        hideMounts = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+        };
+        directories = lib.mkOption {
+          type = lib.types.listOf (lib.types.either lib.types.str (lib.types.submodule {
+            options = {
+              directory = lib.mkOption { type = lib.types.str; };
+              user = lib.mkOption { type = lib.types.str; default = "root"; };
+              group = lib.mkOption { type = lib.types.str; default = "root"; };
+              mode = lib.mkOption { type = lib.types.str; default = "755"; };
+            };
+          }));
+          default = [];
+        };
+        files = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [];
+        };
+      };
+    });
+    default = {};
+    description = "Impermanence configuration (stub when disabled)";
   };
 
 
-  config = lib.mkIf cfg.enable {
-    # Create media group for data access
-    users.groups.media = {};
-    users.users.izzy.extraGroups = [ "media" ];
-    users.users.cassie.extraGroups = [ "media" ];
+  config = lib.mkMerge [
+    # Stub environment.persistence for services that reference it when impermanence is disabled
+    (lib.mkIf (!cfg.enable) {
+      environment.persistence = {};
+    })
 
-    # move ssh keys
+    # Real impermanence configuration when enabled (ZFS-based)
+    (lib.mkIf cfg.enable {
 
+    # Fix /var/lib/private permissions for systemd DynamicUser services
     systemd.tmpfiles.rules = [
-      # Fix permissions for systemd DynamicUser services
-      "Z /var/lib/private 0700 root root -" # Use Z to recursively fix permissions
-    ] ++ (mkIf config.services.openssh.enable [
-      # Ensure SSH directory exists in persistent storage
-      "d ${cfg.persistPath}/etc/ssh 0755 root root -"
-    ]) ++ (mkIf (config.mySystem.dataFolder != null) [
+      "Z /var/lib/private 0700 root root -"
+    ] ++ (mkIf (config.mySystem.dataFolder != null) [
       # Create common data directories with media group ownership
       "d ${config.mySystem.dataFolder} 0775 root media -"
       "d ${config.mySystem.dataFolder}/media 0775 root media -"
@@ -53,6 +76,9 @@ with lib;
       "d ${config.mySystem.dataFolder}/photos/immich 0775 root media -"
       "d ${config.mySystem.dataFolder}/torrents 0775 root media -"
       "d ${config.mySystem.dataFolder}/syncthing 0775 root media -"
+    ]) ++ (mkIf config.services.openssh.enable [
+      # Ensure SSH directory exists in persistent storage and generate keys if needed
+      "d ${cfg.persistPath}/etc/ssh 0755 root root -"
     ]);
 
     # Generate SSH host keys in persistent location if they don't exist
@@ -93,5 +119,6 @@ with lib;
       ];
     };
 
-  };
+    })
+  ];
 }

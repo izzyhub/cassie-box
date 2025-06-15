@@ -12,6 +12,7 @@ let
   qbit_port = 32387;
   cfg = config.mySystem.services.${app};
   appFolder = "/var/lib/${app}";
+  dataFolder = "${config.mySystem.dataFolder}";
   persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
   xseedShell = pkgs.writeScriptBin "xseed.sh" # scrit to call cross-seed upon torrent finish
     ''
@@ -54,17 +55,17 @@ in
         volumes = [
           "${appFolder}:/config:rw"
           "${xseedShell}/bin/xseed.sh:/scripts/xseed.sh:Z"
-          "${appFolder}/downloads/qbittorrent-lts:/mnt/data/torrents/:rw"
-          "${appFolder}/qbittorrent-cache:/cache"
+          "${dataFolder}/torrents:/mnt/data/torrents/:rw"
+          "${dataFolder}/qbittorrent-cache:/cache"
           "/etc/localtime:/etc/localtime:ro"
         ];
       };
 
 
 
-    environment.persistence."${config.mySystem.persistentFolder}" = lib.mkIf config.mySystem.system.impermanence.enable {
-      directories = [{ directory = appFolder; inherit user; inherit group; mode = "750"; }];
-    };
+    # environment.persistence."${config.mySystem.persistentFolder}" = lib.mkIf config.mySystem.system.impermanence.enable {
+    #   directories = [{ directory = appFolder; inherit user; inherit group; mode = "750"; }];
+    # };
 
     services.nginx.virtualHosts."${app}.${config.networking.domain}" = {
       useACMEHost = config.networking.domain;

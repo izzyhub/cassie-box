@@ -53,7 +53,7 @@ in
         volumes = [
           "${appFolder}:/config:rw"
           "${dataFolder}/torrents/:${dataFolder}/downloads/qbittorrent:rw"
-          "${appFolder}/qbittorrent-cache:/cache"
+          "${dataFolder}/qbittorrent-cache:/cache"
           "/etc/localtime:/etc/localtime:ro"
         ];
       };

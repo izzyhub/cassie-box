@@ -5,7 +5,8 @@
     ./security.nix
     ./systempackages.nix
     ./nix.nix
-    #./impermanence.nix
+    ./impermanence.nix
+    ./basic.nix
     ./motd
     ./autoupgrades
   ];
