@@ -11,7 +11,7 @@ let
   description = "TV organizer";
   user = "kah"; #string
   group = "kah"; #string
-  port = 8989; #int
+  port = 8999; #int
   appFolder = "/var/lib/${app}";
   persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
   host = "${app}" + (if cfg.dev then "-dev" else "");
@@ -50,7 +50,7 @@ in
         {
           type = lib.types.bool;
           description = "Enable backups";
-          default = true;
+          default = false;
         };
     };
 
@@ -65,7 +65,6 @@ in
 
     users.users.izzy.extraGroups = [ group ];
     users.users.cassie.extraGroups = [ group ];
-
 
     environment.persistence."${config.mySystem.persistentFolder}" = lib.mkIf config.mySystem.system.impermanence.enable {
       directories = [{ directory = appFolder; user = "kah"; group = "kah"; mode = "750"; }];

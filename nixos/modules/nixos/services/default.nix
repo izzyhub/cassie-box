@@ -26,7 +26,6 @@
     ./recyclarr
     ./sonarr
     ./radarr
-    ./sabnzbd
     ./invidious
     ./thelounge
     ./victoriametrics
@@ -39,5 +38,6 @@
     ./vikunja
     ./silverbullet
     ./tandoor
+    ./vaultwarden
   ];
 }

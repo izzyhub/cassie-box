@@ -6,10 +6,10 @@
 with lib;
 let
   app = "sabnzbd";
-  image = "ghcr.io/onedr0p/sabnzbd:4.4.1@sha256:4188d3c29c53de1018edcfd5dc2d0a0c7955b9a239b91ff6c859626abd3494dc";
+  image = "ghcr.io/home-operations/sonarr:4.0.15";
   user = "kah"; #string
   group = "kah"; #string
-  port = 8080; #int
+  port = 8989; #int
   cfg = config.mySystem.services.${app};
   appFolder = "/var/lib/${app}";
   persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
@@ -31,7 +31,8 @@ in
       image = "${image}";
       user = "568:568";
       environment = {
-        SABNZBD__HOST_WHITELIST_ENTRIES = "sabnzbd, sabnzbd.trux.dev";
+        SABNZBD__HOST_WHITELIST_ENTRIES = "sabnzbd, sabnzbd.cassies.app";
+        SABNZBD__PORT = "${builtins.toString port}";
       };
       volumes = [
         "${appFolder}:/config:rw"

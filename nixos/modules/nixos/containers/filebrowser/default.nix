@@ -94,16 +94,16 @@ in
       image = "${image}";
       user = "568:568";
       environment = {
-        TZ = "Australia/Melbourne";
+        TZ = "America/New_York";
         FB_DATABASE = "/config/filebrowser.db";
-        FB_ROOT = "/srv";
+        FB_ROOT = "/data";
         FB_LOG = "stdout";
         FB_NOAUTH = "true";
         FB_PORT = "${builtins.toString port}";
       };
       volumes = [
         "${appFolder}:/config:rw"
-        "${dataFolder}:/data:rw"
+        "/mnt/data/:/data:rw"
         "/etc/localtime:/etc/localtime:ro"
       ];
     };

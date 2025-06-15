@@ -31,7 +31,7 @@ in
       {
         type = types.str;
         description = "Location for  snapshot mount";
-        default = "/mnt/nightly_backup";
+        default = "/mnt/data/nightly_backup";
       };
 
   };

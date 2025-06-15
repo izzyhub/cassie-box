@@ -60,6 +60,7 @@
     #   enable = false;  # Disabled - using internal-only setup with Tailscale
     # };
 
+    vaultwarden.enable = true;
     homepage.enable = true;
 
     overseerr.enable = true;
@@ -85,6 +86,7 @@
     plex.enable = true;
     maintainerr.enable = true;
     immich.enable = true;
+    #romm.enable = true;
     filebrowser.enable = true;
     syncthing = {
       enable = true;

@@ -18,5 +18,7 @@
     ./filebrowser
     ./redbot
     ./maintainerr
+    ./romm
+    ./sabnzbd
   ];
 }
