@@ -119,7 +119,8 @@
   };
 
   mySystem.persistentFolder = "/persist";
-  mySystem.system.motd.networkInterfaces = [ "enp1s0" ];
+  mySystem.system.motd.networkInterfaces = [ "eno2" ];
+  mySystem.system.motd.enable = true;
 
   # Intel qsv
   boot.kernelParams = [
