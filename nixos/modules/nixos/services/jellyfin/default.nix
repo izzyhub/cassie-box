@@ -48,7 +48,7 @@ in
         {
           type = lib.types.bool;
           description = "Enable backups";
-          default = false;
+          default = true;
         };
    };
 
