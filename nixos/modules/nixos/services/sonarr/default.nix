@@ -11,7 +11,7 @@ let
   description = "TV organizer";
   user = "kah"; #string
   group = "kah"; #string
-  port = 8999; #int
+  port = 8989; #int
   appFolder = "/var/lib/${app}";
   persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
   host = "${app}" + (if cfg.dev then "-dev" else "");
@@ -76,6 +76,7 @@ in
       enable = true;
       dataDir = "${appFolder}";
       inherit user group;
+      settings.server.port = port;
     };
 
 

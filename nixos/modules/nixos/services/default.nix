@@ -27,7 +27,6 @@
     ./sonarr
     ./radarr
     ./invidious
-    ./thelounge
     ./victoriametrics
     ./readarr
     ./lidarr

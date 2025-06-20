@@ -103,7 +103,6 @@
     };
 
     invidious.enable = true;
-    thelounge.enable = true;
     changedetection.enable = true;
     linkding.enable = true;
     vikunja.enable = true;
