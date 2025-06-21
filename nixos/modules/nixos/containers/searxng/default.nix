@@ -11,7 +11,7 @@ let
   group = "977"; #string
   port = 8084; #int
   cfg = config.mySystem.services.${app};
-  appFolder = "/var/lib/${app}";
+  appFolder = "/mnt/data/appdata/${app}";
   # persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
 in
 {

@@ -13,7 +13,7 @@ let
   user = "%{user kah}"; #string
   group = "%{group kah}"; #string
   port = 1234; #int
-  appFolder = "/var/lib/${app}";
+  appFolder = "/mnt/data/appdata/${app}";
   persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
   host = "${app}" + (if cfg.dev then "-dev" else "");
   url = "${host}.${config.networking.domain}";

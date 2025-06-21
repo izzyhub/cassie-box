@@ -13,7 +13,7 @@ let
   user = "redlib"; #string
   group = "redlib"; #string
   port = 8080; #int
-  appFolder = "/var/lib/${app}";
+  appFolder = "/mnt/data/appdata/${app}";
   # persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
   host = "${app}" + (if cfg.dev then "-dev" else "");
   url = "${host}.${config.networking.domain}";

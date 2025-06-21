@@ -8,7 +8,7 @@ let
   cfg = config.mySystem.services.code-server;
   app = "code-server";
   url = "code-${config.networking.hostName}.${config.networking.domain}";
-  appFolder = "/var/lib/${app}";
+  appFolder = "/mnt/data/appdata/${app}";
   user = "cassie";
   group = "users";
 in

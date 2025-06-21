@@ -14,7 +14,7 @@ let
   group = "minio"; #string
   port = 9001; #int
   s3port = 9000; #int
-  appFolder = "/var/lib/${app}";
+  appFolder = "/mnt/data/appdata/${app}";
   persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
   host = "${app}" + (if cfg.dev then "-dev" else "");
   url = "${host}.${config.networking.domain}";

@@ -13,7 +13,7 @@ let
   inherit (config.services.calibre-web) user;#string
   inherit (config.services.calibre-web) group;#string
   port = 8083; #int
-  appFolder = "/var/lib/${app}";
+  appFolder = "/mnt/data/appdata/${app}";
   persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
   host = "${app}" + (if cfg.dev then "-dev" else "");
   url = "${host}.${config.networking.domain}";

@@ -12,7 +12,7 @@ let
   qbit_port = 32189;
   cfg = config.mySystem.services.${app};
   dataFolder = "${config.mySystem.dataFolder}";
-  appFolder = "/var/lib/${app}";
+  appFolder = "/mnt/data/appdata/${app}";
   persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
 in
 {

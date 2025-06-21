@@ -11,7 +11,7 @@ let
   group = "kah"; #string
   port = 8181; #int
   cfg = config.mySystem.services.${app};
-  appFolder = "/var/lib/${app}";
+  appFolder = "/mnt/data/appdata/${app}";
   persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
 in
 {

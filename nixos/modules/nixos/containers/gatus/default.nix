@@ -12,7 +12,7 @@ let
   group = "kah"; #string
   port = 8080; #int
   cfg = config.mySystem.services.${app};
-  appFolder = "/var/lib/${app}";
+  appFolder = "/mnt/data/appdata/${app}";
 
   # persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
   containerPersistentFolder = "/config";

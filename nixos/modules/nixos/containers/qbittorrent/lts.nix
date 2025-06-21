@@ -11,7 +11,7 @@ let
   port = 8080; #int
   qbit_port = 32387;
   cfg = config.mySystem.services.${app};
-  appFolder = "/var/lib/${app}";
+  appFolder = "/mnt/data/appdata/${app}";
   dataFolder = "${config.mySystem.dataFolder}";
   persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
   xseedShell = pkgs.writeScriptBin "xseed.sh" # scrit to call cross-seed upon torrent finish

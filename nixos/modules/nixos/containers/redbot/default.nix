@@ -13,7 +13,7 @@ let
   user = "568"; #string
   group = "568"; #string
   # port = ; #int
-  appFolder = "/var/lib/${app}";
+  appFolder = "/mnt/data/appdata/${app}";
   dataFolder = "${config.mySystem.dataFolder}";
   persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
   host = "${app}" + (if cfg.dev then "-dev" else "");

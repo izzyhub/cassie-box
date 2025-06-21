@@ -13,7 +13,7 @@ let
   inherit (config.services.navidrome) user; #string
   inherit (config.services.navidrome) group; #string
   port = config.services.navidrome.settings.Port; #int
-  appFolder = "/var/lib/${app}";
+  appFolder = "/mnt/data/appdata/${app}";
   persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
   host = "${app}" + (if cfg.dev then "-dev" else "");
   url = "${host}.${config.networking.domain}";

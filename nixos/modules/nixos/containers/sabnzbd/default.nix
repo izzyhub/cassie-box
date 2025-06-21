@@ -6,12 +6,12 @@
 with lib;
 let
   app = "sabnzbd";
-  image = "ghcr.io/home-operations/sonarr:4.0.15";
+  image = "ghcr.io/home-operations/sabnzbd:4.5";
   user = "kah"; #string
   group = "kah"; #string
   port = 8989; #int
   cfg = config.mySystem.services.${app};
-  appFolder = "/var/lib/${app}";
+  appFolder = "/mnt/data/appdata/${app}";
   persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
 in
 {
