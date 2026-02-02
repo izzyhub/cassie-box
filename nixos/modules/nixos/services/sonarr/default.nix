@@ -76,9 +76,14 @@ in
       enable = true;
       dataDir = "${appFolder}";
       inherit user group;
-      settings.server.port = port;
+      settings = {
+        server = {
+          port = port;
+	};
+      };
     };
 
+    #services.sonarr.settings.server.port = port;
 
     # homepage integration
     mySystem.services.homepage.media = mkIf cfg.addToHomepage [
