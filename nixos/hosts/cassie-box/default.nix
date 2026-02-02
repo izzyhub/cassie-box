@@ -53,8 +53,12 @@
     mariadb.enable = true;
     nginx.enable = true;
 
-    # Dynamic DNS - disabled for internal-only setup
-    # cfDdns.enable = true;
+    # Dynamic DNS - updates Cloudflare with local IP
+    cfDdns = {
+      enable = true;
+      interface = "eno2";
+      records = [ "cassies.app" "*.cassies.app" ];
+    };
 
     # cloudflare-tunnel = {
     #   enable = false;  # Disabled - using internal-only setup with Tailscale

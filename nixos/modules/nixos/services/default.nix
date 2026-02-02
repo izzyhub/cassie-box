@@ -12,6 +12,7 @@
     ./syncthing
     ./restic
     ./adguardhome
+    ./cf-ddns
     ./postgresql
     ./blocky
     ./code-server
