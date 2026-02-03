@@ -14,6 +14,18 @@
     };
   };
 
+  # Skip flaky psycopg tests that fail in the Nix sandbox
+  psycopg-skip-tests = final: prev: {
+    python312 = prev.python312.override {
+      packageOverrides = pySelf: pySuper: {
+        psycopg = pySuper.psycopg.overridePythonAttrs (old: {
+          doCheck = false;
+        });
+      };
+    };
+    python312Packages = final.python312.pkgs;
+  };
+
   # nixpkgs-overlays = final: prev: {
   #   tandoor-recipes = prev.tandoor-recipes.overridePythonAttrs (old: {
   #     doCheck = false;
