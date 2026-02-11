@@ -15,16 +15,18 @@ let
   appFolder = "/mnt/data/appdata/${app}";
   persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
 
-  # TODO refactor out this sht
+  # TODO refactor out this
   settings =
     {
       title = "Cassie's Apps";
+      description = "The interface to Cassie's Apps";
       theme = "dark";
       color = "slate";
       showStats = true;
       disableCollape = true;
       cardBlur = "md";
       statusStyle = "none";
+      disableUpdateCheck = true;
 
       datetime = {
         text_size = "l";
@@ -71,7 +73,6 @@ let
     }
     {
       resources = {
-        disk = "/mnt/data";
         units = "metric";
         label = "data";
       };
@@ -232,6 +233,7 @@ in
       # from not exposing docker socket and makes it
       # easier to have/move services between hosts
       volumes = [
+        "/mnt/data:/mnt/data:ro"
         "/etc/localtime:/etc/localtime:ro"
         "${settingsFile}:/app/config/settings.yaml:ro"
         "${servicesFile}:/app/config/services.yaml:ro"

@@ -14,16 +14,19 @@
     };
   };
 
-  # Skip flaky psycopg tests that fail in the Nix sandbox
+  # Skip flaky psycopg tests that fail in the Nix sandbox.
+  # Must override on paperless-ngx directly because it creates its own
+  # isolated Python environment, so a global python312 overlay has no effect.
   psycopg-skip-tests = final: prev: {
-    python312 = prev.python312.override {
-      packageOverrides = pySelf: pySuper: {
-        psycopg = pySuper.psycopg.overridePythonAttrs (old: {
-          doCheck = false;
-        });
+    paperless-ngx = prev.paperless-ngx.overridePythonAttrs (old: {
+      python = old.python.override {
+        packageOverrides = pySelf: pySuper: {
+          psycopg = pySuper.psycopg.overridePythonAttrs (oldPsycopg: {
+            doCheck = false;
+          });
+        };
       };
-    };
-    python312Packages = final.python312.pkgs;
+    });
   };
 
   # nixpkgs-overlays = final: prev: {
