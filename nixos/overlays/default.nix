@@ -22,6 +22,8 @@
       (_pySelf: pySuper: {
         psycopg = pySuper.psycopg.overridePythonAttrs (_old: {
           doCheck = false;
+          # psycopg_pool is a separate package; remove it from the import check
+          pythonImportsCheck = [ "psycopg" "psycopg_c" ];
         });
       })
     ];
