@@ -1,7 +1,7 @@
 { lib
 , config
 , pkgs
-, inputs
+, inputs ? { }
 , ...
 }:
 with lib;
@@ -20,8 +20,12 @@ let
   url = "${app}.${config.networking.domain}";
 in
 {
-  # Pull in boat-ray's own NixOS module (systemd service + package) from its flake.
-  imports = [ inputs.boat-ray.nixosModules.default ];
+  # Pull in boat-ray's own NixOS module (systemd service + package) from its
+  # flake. Guarded on the input being present so that other hosts/flakes which
+  # reuse these shared modules without a `boat-ray` flake input still evaluate
+  # (they just can't enable the service) instead of failing with
+  # "attribute 'boat-ray' missing".
+  imports = lib.optionals (inputs ? boat-ray) [ inputs.boat-ray.nixosModules.default ];
 
   options.mySystem.${category}.${app} =
     {
@@ -55,6 +59,11 @@ in
     };
 
   config = mkIf cfg.enable {
+
+    assertions = [{
+      assertion = inputs ? boat-ray;
+      message = "mySystem.services.boat-ray.enable requires a `boat-ray` flake input (inputs.boat-ray.nixosModules.default).";
+    }];
 
     # boat-ray transfers files into the media directories, so its service user
     # needs membership in the `media` group (media root is root:media 0775).

@@ -56,6 +56,12 @@
       url = "github:nix-community/nixos-generators";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # boat-ray - peer-to-peer media synchronization
+    # https://gitea.izzys.place/izzy/boat-ray
+    # Note: no nixpkgs follows - boat-ray pins its own nixpkgs-unstable for the
+    # Crane/musl static build; overriding it risks breaking that build.
+    boat-ray.url = "git+https://gitea.izzys.place/izzy/boat-ray";
   };
 
   outputs =
@@ -187,6 +193,22 @@
           ];
         };
       };
+
+      # Dev shell - provides Python (and pre-commit) so the git pre-commit
+      # hooks can run locally. Enter with `nix develop`.
+      devShells = forAllSystems (system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+        in
+        {
+          default = pkgs.mkShell {
+            packages = with pkgs; [
+              python3
+              pre-commit
+              nixpkgs-fmt
+            ];
+          };
+        });
 
       # Packages for ISO generation and installation helpers
       packages = forAllSystems (system: {
