@@ -8,13 +8,21 @@ This is a NixOS configuration repository for "cassie-box", a home media server a
 
 ## Common Commands
 
-**IMPORTANT**: This development machine does not have Nix installed. All configuration testing must be done on the remote cassie-box system via SSH.
+**IMPORTANT**: This development machine has Nix installed, so configuration can be
+evaluated and built locally. You can still apply changes on the remote cassie-box
+system via SSH. Enter the dev shell first with `nix develop` (provides Python for
+the pre-commit hooks).
 
 ### Development and Testing
 ```bash
 # LOCAL COMMANDS (development machine)
+nix develop             # Enter dev shell (Python + pre-commit for the git hooks)
+nix flake check         # Evaluate the flake
 task check              # Run linting and pre-commit checks (if available)
 task format             # Format nix files with nixpkgs-fmt (if available)
+
+# Build the host config locally without applying it
+nixos-rebuild build --flake .#cassie-box
 
 # REMOTE COMMANDS (via SSH to cassie-box)
 ssh izzy@cassie-box "sudo nixos-rebuild dry-run --flake /etc/nixos#cassie-box"  # Show what would change

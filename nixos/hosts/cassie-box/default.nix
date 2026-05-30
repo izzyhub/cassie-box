@@ -101,6 +101,7 @@
     redbot.enable=true;
     silverbullet.enable=true;
     tandoor.enable=true;
+    boat-ray.enable=true;
 
     jellyfin = {
       enable = true;

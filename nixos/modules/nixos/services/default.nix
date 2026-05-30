@@ -40,5 +40,6 @@
     ./tandoor
     ./vaultwarden
     ./jellyfin
+    ./boat-ray
   ];
 }

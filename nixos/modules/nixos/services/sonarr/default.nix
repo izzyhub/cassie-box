@@ -79,7 +79,7 @@ in
       settings = {
         server = {
           port = port;
-	};
+    };
       };
     };
 
