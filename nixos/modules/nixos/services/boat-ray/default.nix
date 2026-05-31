@@ -60,6 +60,14 @@ in
 
   config = mkIf cfg.enable {
 
+    ## Secrets - TMDB/TVDB API keys (and any other env boat-ray needs).
+    sops.secrets."${category}/${app}/env" = {
+      sopsFile = ./secrets.sops.yaml;
+      owner = user;
+      inherit group;
+      restartUnits = [ "${app}.service" ];
+    };
+
     assertions = [{
       assertion = inputs ? boat-ray;
       message = "mySystem.services.boat-ray.enable requires a `boat-ray` flake input (inputs.boat-ray.nixosModules.default).";
@@ -86,7 +94,8 @@ in
       databasePath = "${appFolder}/boat-ray.db";
       cacheDir = "${appFolder}/cache";
       mediaDirs = cfg.mediaDirs;
-      # environmentFile = ...;  # TMDB/TVDB keys - wire up via sops when needed.
+      # TMDB/TVDB keys (and any other env) decrypted by sops at runtime.
+      environmentFile = config.sops.secrets."${category}/${app}/env".path;
     };
 
     # homepage integration
