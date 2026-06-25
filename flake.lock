@@ -8,11 +8,11 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1780450535,
-        "narHash": "sha256-OLnfSHrVsq2i8LJ7QdaVlh28tFOkUoYxzbjR5Z0pDXc=",
+        "lastModified": 1782347081,
+        "narHash": "sha256-WvQz9c/J4u1Vp6EHxAxUXFTSNVx2yYhZBoZPs6eNXuA=",
         "ref": "refs/heads/main",
-        "rev": "1838c1c7a6c014a2fd38295925f9d0b82b0bb3e7",
-        "revCount": 183,
+        "rev": "c1b5cfd9ddae7a5eb73596cec00bd6fcc300290e",
+        "revCount": 184,
         "type": "git",
         "url": "https://gitea.izzys.place/izzy/boat-ray"
       },
@@ -479,11 +479,11 @@
         "nixpkgs": "nixpkgs_5"
       },
       "locked": {
-        "lastModified": 1782166108,
-        "narHash": "sha256-/EtnQBcKbsaCAGQ5VRcplrHRkR4ryqyLMpBfkVuG9Xw=",
+        "lastModified": 1782379505,
+        "narHash": "sha256-zPvPiU+a7pqtH47xrtZLNRABJKpOjfZQclDbcvNtH+I=",
         "owner": "NixOS",
         "repo": "nixos-hardware",
-        "rev": "875776f0252fcb8618bb948640a0d1f7a5b362be",
+        "rev": "603d3afd1b6145bd66e97ae38a34d91c95df70cf",
         "type": "github"
       },
       "original": {
@@ -624,11 +624,11 @@
         "nixpkgs": "nixpkgs_7"
       },
       "locked": {
-        "lastModified": 1782275933,
-        "narHash": "sha256-yEUaSO/saf5Yn8FNBNvR+ln2ORsjemkKroS4PlblCoY=",
+        "lastModified": 1782408544,
+        "narHash": "sha256-HEHe1lFzVmHx+pDi23FoNPkj9L0sz+nD3n4l2oblAdg=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "748aafdf95128f0d1b78bb34fb6c1fcd4ca6dac0",
+        "rev": "e37ed5172610458f6a986a8e03b7564d38df7f7f",
         "type": "github"
       },
       "original": {
