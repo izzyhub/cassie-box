@@ -61,7 +61,7 @@
     # https://gitea.izzys.place/izzy/boat-ray
     # Note: no nixpkgs follows - boat-ray pins its own nixpkgs-unstable for the
     # Crane/musl static build; overriding it risks breaking that build.
-    boat-ray.url = "git+https://gitea.izzys.place/izzy/boat-ray";
+    boat-ray.url = "git+https://gitea.sophie-001.tail6b6f7.ts.net/izzy/boat-ray";
   };
 
   outputs =
