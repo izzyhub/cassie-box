@@ -167,6 +167,11 @@
   networking.hostName = "cassie-box"; # Define your hostname.
   networking.hostId = "0a90730f";
   networking.useDHCP = lib.mkDefault true;
+
+  # Enable NetworkManager for WiFi support. Provides nmcli and nmtui for
+  # managing connections (needed to temporarily move the box onto WiFi).
+  # NetworkManager continues to manage the wired interface via DHCP.
+  networking.networkmanager.enable = true;
   services.samba = {
     enable = true;
     openFirewall = true;
