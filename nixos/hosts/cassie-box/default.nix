@@ -6,6 +6,9 @@
   # Import disko configuration
   imports = [
     ./disko.nix
+    # Temporary: dumps network state to /var/log/net-diag.log. Remove once
+    # the wired link is stable.
+    ./net-diag.nix
   ];
 
   # Create directories for mergerfs
@@ -166,12 +169,62 @@
 
   networking.hostName = "cassie-box"; # Define your hostname.
   networking.hostId = "0a90730f";
-  networking.useDHCP = lib.mkDefault true;
 
-  # Enable NetworkManager for WiFi support. Provides nmcli and nmtui for
-  # managing connections (needed to temporarily move the box onto WiFi).
-  # NetworkManager continues to manage the wired interface via DHCP.
-  networking.networkmanager.enable = true;
+  # eno2 is the wired NIC (see mySystem.services.cfDdns.interface and
+  # mySystem.system.motd.networkInterfaces below, which both name it).
+  #
+  # It is pinned to a static address rather than left on DHCP: this box is the
+  # target of Cloudflare DNS records and a stack of reverse-proxied services,
+  # so an address that can move on its own is a liability. It moved once
+  # already (10.0.0.249 -> 10.0.0.244) when NetworkManager was enabled.
+  #
+  # The mechanism: the NetworkManager module sets `networking.useDHCP = false`
+  # at normal priority, which silently overrode the `mkDefault true` here and
+  # in profiles/global.nix. That disabled dhcpcd outright and left NM as the
+  # sole DHCP client - and NM sends a different DHCP client identifier, so the
+  # router handed out a different lease.
+  #
+  # 10.0.0.249 must sit OUTSIDE the router's DHCP pool, or the router will
+  # eventually lease it to something else. Check the pool before deploying.
+  networking.useDHCP = false;
+  networking.interfaces.eno2 = {
+    useDHCP = false;
+    ipv4.addresses = [{
+      address = "10.0.0.249";
+      prefixLength = 24;
+    }];
+  };
+  networking.defaultGateway = {
+    address = "10.0.0.1";
+    interface = "eno2";
+  };
+  # Static addressing means no DHCP-supplied resolvers. Tailscale still
+  # overlays MagicDNS on top of these when it is up.
+  networking.nameservers = [ "10.0.0.1" "1.1.1.1" ];
+
+  # NetworkManager is here for WiFi only. The `unmanaged` list is what keeps it
+  # off the wired NICs, so it cannot re-address them behind the static config
+  # above. eno1 is listed as well as eno2: NM claims every wired NIC it finds,
+  # and a second interface coming up on the same subnet is what makes inbound
+  # traffic and ARP replies stop lining up with the cabled port.
+  networking.networkmanager = {
+    enable = true;
+    unmanaged = [
+      "interface-name:eno1"
+      "interface-name:eno2"
+    ];
+  };
+
+  networking.firewall = {
+    enable = true;
+    allowPing = true;
+    # A host with both a wired and a WiFi interface up can legitimately
+    # receive a packet on an interface that is not the one its return route
+    # would pick. Strict reverse-path filtering drops those silently, which
+    # looks exactly like the box being unreachable while it can still reach
+    # out. Loose mode only requires that a route back exists at all.
+    checkReversePath = "loose";
+  };
   services.samba = {
     enable = true;
     openFirewall = true;

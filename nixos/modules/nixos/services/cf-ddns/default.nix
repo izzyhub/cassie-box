@@ -59,5 +59,32 @@ in
         ttl=300
       '';
     };
+
+    # The upstream ddclient module runs the unit with DynamicUser = true, so
+    # no `ddclient` account exists on the system. Its ExecStartPre then does
+    #
+    #     install --mode=600 --owner=$USER ... /run/ddclient/ddclient.conf
+    #
+    # and that lookup has to resolve the name for real. When it does not, the
+    # prestart dies with `install: invalid user 'ddclient'` and every run of
+    # the timer fails before ddclient is ever reached - which is exactly the
+    # failure seen here.
+    #
+    # Giving the unit a genuine system account removes the dependency on
+    # resolving a transient user. systemd still chowns RuntimeDirectory and
+    # StateDirectory to it, and ExecStartPre keeps its `!` privileged prefix,
+    # so it can still read the root-owned sops secret below.
+    users.groups.ddclient = { };
+    users.users.ddclient = {
+      isSystemUser = true;
+      group = "ddclient";
+      description = "Cloudflare dynamic DNS client";
+    };
+
+    systemd.services.ddclient.serviceConfig = {
+      DynamicUser = mkForce false;
+      User = "ddclient";
+      Group = "ddclient";
+    };
   };
 }
