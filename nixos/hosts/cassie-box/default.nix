@@ -199,6 +199,16 @@
     "net.ipv4.conf.default.ignore_routes_with_linkdown" = 1;
   };
 
+  # This box sits directly on whatever LAN it is plugged into, so it must not
+  # accept a tailnet subnet route covering that LAN. sophie-001 advertises
+  # 10.0.0.0/24; a node accepting it gets that prefix in tailscale's table 52,
+  # which the ip rule at priority 5270 consults BEFORE `main` - so every local
+  # address is pulled into the tunnel and the local network becomes
+  # unreachable, including hosts on the same switch. That is doubly important
+  # once this is handed over, since 10.0.0.0/24 is a very common home range
+  # and the collision would be silent.
+  services.tailscale.extraSetFlags = [ "--accept-routes=false" ];
+
   networking.firewall = {
     enable = true;
     allowPing = true;
