@@ -238,8 +238,14 @@
     };
   };
 
+  # Disabled for now: the `hosts allow` line below is a stale 10.8.10. subnet
+  # that matches neither the current LAN nor wherever this box ends up, so the
+  # shares deny everyone anyway. Settings are kept rather than deleted - to
+  # bring it back, set enable = true and replace `hosts allow` with something
+  # that matches the target network (or drop the IP allow-list and rely on the
+  # firewall plus Samba user auth).
   services.samba = {
-    enable = true;
+    enable = false;
     openFirewall = true;
     settings = {
       global = {
@@ -262,7 +268,9 @@
       };
     };
   };
-  services.samba-wsdd.enable = true; # make shares visible for windows 10 clients
+  # Follows services.samba above; advertising shares that are not served is
+  # just noise on the network.
+  services.samba-wsdd.enable = false; # make shares visible for windows 10 clients
 
   environment.systemPackages = with pkgs; [
     btrfs-progs
