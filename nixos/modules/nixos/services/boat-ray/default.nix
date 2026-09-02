@@ -62,12 +62,12 @@ in
           Address of the peer boat-ray instance as `host:port`.
 
           Use the peer's tailnet MagicDNS name (e.g.
-          `sophie-001-1.tail6b6f7.ts.net:${builtins.toString grpcPort}`) rather
+          `sophie-001-1:${builtins.toString grpcPort}`) rather
           than a LAN/WAN address, so the connection resolves to the peer's
           tailscale IP and rides the tailnet.
         '';
         default = null;
-        example = "sophie-001-1.tail6b6f7.ts.net:${builtins.toString grpcPort}";
+        example = "sophie-001-1:${builtins.toString grpcPort}";
       };
     };
 
