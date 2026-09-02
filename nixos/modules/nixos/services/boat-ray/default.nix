@@ -53,6 +53,15 @@ in
         description = "Open the gRPC peer port on the tailscale0 interface only";
         default = true;
       };
+      peerAddress = mkOption {
+        type = lib.types.nullOr lib.types.str;
+        description = ''
+          BOAT_RAY_PEER_ADDRESS - the peer's gRPC endpoint as host:port.
+          The port is NOT optional: boat-ray dials "http://''${peerAddress}", so a
+          bare hostname resolves to port 80 and never reaches the peer's gRPC server.
+        '';
+        default = "sophie-001-1:${builtins.toString grpcPort}";
+      };
       mediaDirs = mkOption {
         type = lib.types.listOf lib.types.str;
         description = "Media directories for boat-ray to scan and sync into.";
