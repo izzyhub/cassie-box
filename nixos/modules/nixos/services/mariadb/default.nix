@@ -47,12 +47,10 @@ in
     ## service
     services.mysql = {
       enable = true;
-      # Pinned to the 10.11 LTS (EOL 2028-02) rather than `pkgs.mariadb`, which
-      # became 11.4 in 26.05. That major bump is one-way and the NixOS module
-      # does not run `mariadb-upgrade` for you -- with hourly autoUpgrade on,
-      # it must not ride along with an unattended switch. To do it later:
-      # dump first, switch to `pkgs.mariadb`, then run `mariadb-upgrade`.
-      package = pkgs.mariadb_1011;
+      # 11.4 LTS (EOL 2029-05). Upgraded from 10.11 deliberately, out of band
+      # from an autoUpgrade switch, since the NixOS module does not run
+      # `mariadb-upgrade` for you and the bump is one-way.
+      package = pkgs.mariadb;
     };
 
   };

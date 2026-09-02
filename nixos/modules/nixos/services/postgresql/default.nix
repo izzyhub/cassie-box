@@ -104,6 +104,11 @@ in
 
     services.postgresql = {
       enable = true;
+      # Pinned explicitly rather than left to the stateVersion default,
+      # which would still be 15 (stateVersion is 23.11 and must not move).
+      # Migrated from 15 with `upgrade-pg-cluster`; 17 is also what 25.11+
+      # picks for fresh installs.
+      package = pkgs.postgresql_17;
       identMap = ''
         # ArbitraryMapName systemUser DBUser
         superuser_map      root      postgres
