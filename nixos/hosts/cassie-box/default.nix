@@ -56,10 +56,12 @@
     mariadb.enable = true;
     nginx.enable = true;
 
-    # Dynamic DNS - updates Cloudflare with local IP
+    # Dynamic DNS - updates Cloudflare with local IP.
+    # `interface` is deliberately unset: the address is read from whichever
+    # link currently holds the default route, so the record follows the box
+    # when it falls back from eno2 to WiFi.
     cfDdns = {
       enable = true;
-      interface = "eno2";
       records = [ "cassies.app" "*.cassies.app" ];
     };
 
