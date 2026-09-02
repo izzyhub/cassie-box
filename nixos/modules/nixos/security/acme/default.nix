@@ -38,7 +38,7 @@ in
         ];
         dnsProvider = "cloudflare";
         dnsResolver = "1.1.1.1:53";
-        credentialsFile = config.sops.secrets."security/acme/env".path;
+        environmentFile = config.sops.secrets."security/acme/env".path;
       };
     };
 

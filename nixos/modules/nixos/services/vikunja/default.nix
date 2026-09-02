@@ -94,7 +94,7 @@ in
       environmentFiles=[ config.sops.secrets."${category}/${app}/env".path ]; # TODO jwt and mailer
       settings = {
         service = {
-          publicurl = url;
+          # publicurl is derived upstream from frontendScheme/frontendHostname.
           enablecaldav=true;
           timezone="America/New_York";
         };

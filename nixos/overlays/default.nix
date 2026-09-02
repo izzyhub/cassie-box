@@ -18,11 +18,12 @@
   #     so the system was quietly running upstream CppNix.
   #
   # Upstream's release-branch module is `lixFromNixpkgs` anyway, so this
-  # overlay is the same thing without the network dependency. Pin the
-  # explicit `lix_2_93` set rather than `pkgs.lix`, which on 25.05 is 2.91.3.
+  # overlay is the same thing without the network dependency. Pin an explicit
+  # version set rather than `pkgs.lix`, which trails the release branch.
+  # 26.05 dropped 2.93 (`lixPackageSets.stable` is 2.94.2).
   lix = _final: prev:
     let
-      lixSet = prev.lixPackageSets.lix_2_93;
+      lixSet = prev.lixPackageSets.lix_2_94;
     in
     {
       inherit (lixSet) lix nix-eval-jobs nix-direnv;

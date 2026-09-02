@@ -2,7 +2,7 @@
   description = "A very basic flake";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-25.05";
+    nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-26.05";
     nixpkgs-unstable.url = "github:nixos/nixpkgs?ref=nixos-unstable";
 
     # impermanence
@@ -19,7 +19,7 @@
     # home-manager - home user+dotfile manager
     # https://github.com/nix-community/home-manager
     home-manager = {
-      url = "github:nix-community/home-manager/release-25.05";
+      url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -142,6 +142,12 @@
                     "aspnetcore-runtime-wrapped-6.0.36"
                     "dotnet-sdk-6.0.428"
                     "dotnet-sdk-wrapped-6.0.428"
+                    # EOL, marked insecure in 26.05 (local privesc CVEs).
+                    # Required here: this box is 8th-gen Coffee Lake (Gen9.5
+                    # graphics), and the modern replacement `vpl-gpu-rt` only
+                    # supports Gen12+. Dropping MSDK would lose QSV transcoding,
+                    # so it stays until the hardware changes.
+                    "intel-media-sdk-23.2.2"
                   ];
 
                 };

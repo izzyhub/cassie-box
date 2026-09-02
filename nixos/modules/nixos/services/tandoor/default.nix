@@ -86,6 +86,14 @@ in
       enable=true;
       extraConfig = {
         GUNICORN_MEDIA = "0";
+        # GHSA-g8w3-p77x-mmxh: with MEDIA_ROOT == the state dir, the nginx
+        # /media/ alias below served db.sqlite3 too. 26.05 defaults this to
+        # the media/ subdir, but only for stateVersion >= 26.05, so set it
+        # explicitly. Requires the existing media to be moved on the host:
+        #   systemctl stop tandoor-recipes
+        #   mkdir -p /var/lib/tandoor-recipes/media
+        #   mv /var/lib/tandoor-recipes/{files,recipes} /var/lib/tandoor-recipes/media/
+        MEDIA_ROOT = "/var/lib/tandoor-recipes/media";
       };
     };
 
@@ -120,7 +128,7 @@ in
     services.nginx.virtualHosts.${url} = {
       forceSSL = true;
       useACMEHost = config.networking.domain;
-      locations."/media/".alias = "/var/lib/tandoor-recipes/"; # needed to show images
+      locations."/media/".alias = "/var/lib/tandoor-recipes/media/"; # needed to show images
       locations."^~ /" = {
         proxyPass = "http://127.0.0.1:${builtins.toString port}";
       };

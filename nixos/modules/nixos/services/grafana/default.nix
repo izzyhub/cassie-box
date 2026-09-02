@@ -61,12 +61,15 @@ in
   config = mkIf cfg.enable {
 
     ## Secrets
-    # sops.secrets."${category}/${app}/env" = {
-    #   sopsFile = ./secrets.sops.yaml;
-    #   owner = user;
-    #   group = group;
-    #   restartUnits = [ "${app}.service" ];
-    # };
+    # 26.05 dropped grafana's built-in default secret_key, so it must be
+    # supplied explicitly. Read via grafana's $__file{} provider so the value
+    # never lands in the store.
+    sops.secrets."${category}/${app}/secret_key" = {
+      sopsFile = ./secrets.sops.yaml;
+      owner = user;
+      group = group;
+      restartUnits = [ "${app}.service" ];
+    };
 
     users.users.cassie.extraGroups = [ group ];
     users.users.izzy.extraGroups = [ group ];
@@ -92,6 +95,8 @@ in
 
       settings = {
         database.wal = true;
+
+        security.secret_key = "$__file{${config.sops.secrets."${category}/${app}/secret_key".path}}";
 
         server = {
           http_port = port;
