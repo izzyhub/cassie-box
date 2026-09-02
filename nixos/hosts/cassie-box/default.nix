@@ -53,6 +53,9 @@
 
     # databases
     postgresql.enable = true;
+    # STEP 1 of the 15 -> 17 upgrade: deploy this, then run
+    # `upgrade-pg-cluster` as root. Remove once step 3 has landed.
+    postgresql.upgradeTo = pkgs.postgresql_17;
     mariadb.enable = true;
     nginx.enable = true;
 

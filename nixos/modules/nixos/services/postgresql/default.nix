@@ -28,6 +28,32 @@ in
           description = "Enable backups";
           default = true;
         };
+      upgradeTo = mkOption
+        {
+          type = lib.types.nullOr lib.types.package;
+          default = null;
+          example = literalExpression "pkgs.postgresql_17";
+          description = ''
+            Major-version upgrade helper. When set, puts an
+            `upgrade-pg-cluster` script on PATH that pg_upgrades the
+            running cluster into this package's data directory.
+
+            Postgres majors need an imperative migration, so this is a
+            two-step dance:
+
+              1. Set this to the target package, leaving `package`
+                 alone, and deploy.
+              2. As root, stop everything that talks to postgres and run
+                 `upgrade-pg-cluster`.
+              3. Point `services.postgresql.package` at the target,
+                 unset this, and deploy again.
+              4. Run the `vacuumdb` command the script prints.
+
+            Do not set this and bump `package` in the same deploy -- the
+            new cluster would be initialised empty before pg_upgrade
+            ever runs.
+          '';
+        };
 
     };
 
@@ -44,6 +70,36 @@ in
     environment.persistence."${config.mySystem.persistentFolder}" = lib.mkIf config.mySystem.system.impermanence.enable {
       directories = [{ directory = appFolder; user = "postgres"; group = "postgres"; mode = "750"; }];
     };
+
+    # See mySystem.services.postgresql.upgradeTo above. Straight out of the
+    # NixOS manual's "Upgrading" section, with the old cluster taken from the
+    # currently-configured package.
+    environment.systemPackages = lib.optional (cfg.upgradeTo != null) (
+      let
+        newPostgres = cfg.upgradeTo;
+        pgCfg = config.services.postgresql;
+      in
+      pkgs.writeShellScriptBin "upgrade-pg-cluster" ''
+        set -eux
+
+        systemctl stop postgresql
+
+        NEWDATA="/var/lib/postgresql/${newPostgres.psqlSchema}"
+        NEWBIN="${newPostgres}/bin"
+
+        OLDDATA="${pgCfg.dataDir}"
+        OLDBIN="${pgCfg.finalPackage}/bin"
+
+        install -d -m 0700 -o postgres -g postgres "$NEWDATA"
+        cd "$NEWDATA"
+        sudo -u postgres "$NEWBIN/initdb" -D "$NEWDATA" ${lib.escapeShellArgs pgCfg.initdbArgs}
+
+        sudo -u postgres "$NEWBIN/pg_upgrade" \
+          --old-datadir "$OLDDATA" --new-datadir "$NEWDATA" \
+          --old-bindir "$OLDBIN" --new-bindir "$NEWBIN" \
+          "$@"
+      ''
+    );
 
 
     services.postgresql = {
