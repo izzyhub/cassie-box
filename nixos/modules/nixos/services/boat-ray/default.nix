@@ -56,6 +56,19 @@ in
         description = "Media directories for boat-ray to scan and sync into.";
         default = [ "${config.mySystem.dataFolder}/media" ];
       };
+      peerAddress = mkOption {
+        type = lib.types.nullOr lib.types.str;
+        description = ''
+          Address of the peer boat-ray instance as `host:port`.
+
+          Use the peer's tailnet MagicDNS name (e.g.
+          `sophie-001-1.tail6b6f7.ts.net:${builtins.toString grpcPort}`) rather
+          than a LAN/WAN address, so the connection resolves to the peer's
+          tailscale IP and rides the tailnet.
+        '';
+        default = null;
+        example = "sophie-001-1.tail6b6f7.ts.net:${builtins.toString grpcPort}";
+      };
     };
 
   config = mkIf cfg.enable {
@@ -94,8 +107,46 @@ in
       databasePath = "${appFolder}/boat-ray.db";
       cacheDir = "${appFolder}/cache";
       mediaDirs = cfg.mediaDirs;
+      peerAddress = cfg.peerAddress;
       # TMDB/TVDB keys (and any other env) decrypted by sops at runtime.
       environmentFile = config.sops.secrets."${category}/${app}/env".path;
+    };
+
+    ### Tailnet ordering
+    # The peer is reached by its MagicDNS name, so boat-ray must not start
+    # until tailscaled is up (it owns the 100.100.100.100 resolver and the
+    # tailscale0 route) and the underlying network is online. Upstream already
+    # orders after network-online.target; tailscaled is added here because only
+    # this repo knows the peer is a tailnet host.
+    # (Guarded on tailscale actually being enabled, so a host reusing these
+    # shared modules without tailscale doesn't get an unsatisfiable dependency.)
+    systemd.services.${app} = {
+      after = [ "network-online.target" ]
+        ++ lib.optional config.services.tailscale.enable "tailscaled.service";
+      wants = [ "network-online.target" ];
+      requires = lib.optional config.services.tailscale.enable "tailscaled.service";
+
+      # tailscaled being *started* doesn't mean the tailnet is usable yet:
+      # MagicDNS only answers once the node has come up and pulled the netmap.
+      # Wait (bounded) for the peer name to resolve so the first connection
+      # attempt doesn't fail on NXDOMAIN. Never fails the unit - boat-ray's
+      # Restart=on-failure handles a peer that is genuinely down.
+      serviceConfig = lib.optionalAttrs (cfg.peerAddress != null) {
+        ExecStartPre = [
+          "${pkgs.writeShellScript "${app}-wait-for-peer-dns" ''
+            host="${lib.head (lib.splitString ":" cfg.peerAddress)}"
+            i=0
+            while [ "$i" -lt 30 ]; do
+              if ${pkgs.getent}/bin/getent hosts "$host" > /dev/null; then
+                exit 0
+              fi
+              i=$((i + 1))
+              ${pkgs.coreutils}/bin/sleep 2
+            done
+            echo "boat-ray: peer $host did not resolve within 60s, starting anyway" >&2
+          ''}"
+        ];
+      };
     };
 
     # homepage integration

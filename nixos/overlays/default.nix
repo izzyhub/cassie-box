@@ -5,6 +5,35 @@
 
   nur = inputs.nur.overlays.default;
 
+  # Lix, taken from nixpkgs' `lixPackageSets` rather than the upstream
+  # lix-project/nixos-module flake.
+  #
+  # The old `lix-module` flake input was removed for two reasons:
+  #  1. Its tarballs are pinned by rev against git.lix.systems' on-demand
+  #     Forgejo archive endpoint, which hangs indefinitely for revs the server
+  #     hasn't already cached. That was the `nix eval` timeout.
+  #  2. It never actually did anything here. Its only effect is setting
+  #     `nixpkgs.overlays`, which nixpkgs silently ignores when `pkgs` is
+  #     imported externally and passed to `nixosSystem` (see flake.nix) --
+  #     so the system was quietly running upstream CppNix.
+  #
+  # Upstream's release-branch module is `lixFromNixpkgs` anyway, so this
+  # overlay is the same thing without the network dependency. Pin the
+  # explicit `lix_2_93` set rather than `pkgs.lix`, which on 25.05 is 2.91.3.
+  lix = _final: prev:
+    let
+      lixSet = prev.lixPackageSets.lix_2_93;
+    in
+    {
+      inherit (lixSet) lix nix-eval-jobs nix-direnv;
+
+      nixVersions = prev.nixVersions // {
+        stable = lixSet.lix;
+        # Escape hatch for anything that genuinely needs to link CppNix.
+        stable_upstream = prev.nixVersions.stable;
+      };
+    };
+
   # The unstable nixpkgs set (declared in the flake inputs) will
   # be accessible through 'pkgs.unstable'
   unstable-packages = final: _prev: {

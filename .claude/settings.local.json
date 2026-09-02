@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./test.sh:*)",
+      "Bash(find:*)",
+      "Bash(rg:*)",
+      "Bash(ls:*)",
+      "Bash(./check_services.sh:*)",
+      "Bash(./flake_check.sh)",
+      "Bash(grep:*)",
+      "Bash(task nix:deploy-single:*)",
+      "Bash(ssh:*)",
+      "Bash(rsync:*)",
+      "Bash(./docker-build.sh:*)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "Bash(nix --version)",
+      "Bash(nix eval *)",
+      "Bash(git stash *)",
+      "Bash(timeout 400 nix develop --no-update-lock-file --command bash -c \"python3 --version && pre-commit --version && echo OK-shell\")",
+      "Bash(nixos-rebuild build *)"
+    ],
+    "deny": []
+  }
+}

@@ -104,7 +104,11 @@
     redbot.enable=true;
     silverbullet.enable=true;
     tandoor.enable=true;
-    boat-ray.enable=true;
+    boat-ray = {
+      enable = true;
+      # Peer reached over the tailnet by its MagicDNS name.
+      peerAddress = "sophie-001-1.tail6b6f7.ts.net:50051";
+    };
 
     jellyfin = {
       enable = true;
