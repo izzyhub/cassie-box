@@ -211,6 +211,25 @@
   # and the collision would be silent.
   services.tailscale.extraSetFlags = [ "--accept-routes=false" ];
 
+  # MagicDNS needs real split DNS, which /etc/resolv.conf cannot express.
+  #
+  # Without this, NetworkManager owns resolv.conf (main.dns=default, via
+  # openresolv) and tailscaled can only append 100.100.100.100 to the same
+  # flat nameserver list. Resolution then depends on ordering: if the LAN
+  # resolver from DHCP is consulted first it answers NXDOMAIN for a
+  # `*.ts.net` name, and glibc treats that as authoritative and stops - it
+  # only falls through to the next nameserver on SERVFAIL or timeout. The
+  # result is `Name does not resolve` for a peer that is up and reachable,
+  # reappearing on any DHCP renewal or eno2<->wlo1 failover that rewrites
+  # the list.
+  #
+  # With resolved, NetworkManager hands per-link DHCP servers to it and
+  # tailscaled installs `~tail6b6f7.ts.net` as a routing domain pointed at
+  # 100.100.100.100, so tailnet names are resolved by tailscale alone and
+  # everything else is unaffected - regardless of which link is up.
+  services.resolved.enable = true;
+  networking.networkmanager.dns = "systemd-resolved";
+
   networking.firewall = {
     enable = true;
     allowPing = true;

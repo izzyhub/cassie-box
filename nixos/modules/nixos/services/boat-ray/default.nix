@@ -138,8 +138,14 @@ in
     # this repo knows the peer is a tailnet host.
     # (Guarded on tailscale actually being enabled, so a host reusing these
     # shared modules without tailscale doesn't get an unsatisfiable dependency.)
+    #
+    # nss-lookup.target is the synchronisation point for name resolution:
+    # resolvers declare Before=/Wants= on it, consumers order After= it. It is
+    # only ordering, never pulled in from here - a host with no resolver unit
+    # simply has nothing before it, so this stays a no-op rather than an
+    # unsatisfiable dependency.
     systemd.services.${app} = {
-      after = [ "network-online.target" ]
+      after = [ "network-online.target" "nss-lookup.target" ]
         ++ lib.optional config.services.tailscale.enable "tailscaled.service";
       wants = [ "network-online.target" ];
       requires = lib.optional config.services.tailscale.enable "tailscaled.service";
