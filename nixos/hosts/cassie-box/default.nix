@@ -130,7 +130,8 @@
   };
 
   mySystem.persistentFolder = "/persist";
-  mySystem.system.motd.networkInterfaces = [ "eno2" ];
+  # Both links, so the login banner shows the WiFi address when eno2 is unplugged.
+  mySystem.system.motd.networkInterfaces = [ "eno2" "wlo1" ];
   mySystem.system.motd.enable = true;
 
   # Intel qsv
@@ -174,49 +175,28 @@
   networking.hostName = "cassie-box"; # Define your hostname.
   networking.hostId = "0a90730f";
 
-  # eno2 is the wired NIC (see mySystem.services.cfDdns.interface and
-  # mySystem.system.motd.networkInterfaces below, which both name it).
+  # eno2 is the wired NIC and wlo1 the WiFi radio (confirmed from net-diag.log;
+  # there is no eno1 on this box).
   #
-  # It is pinned to a static address rather than left on DHCP: this box is the
-  # target of Cloudflare DNS records and a stack of reverse-proxied services,
-  # so an address that can move on its own is a liability. It moved once
-  # already (10.0.0.249 -> 10.0.0.244) when NetworkManager was enabled.
+  # Nothing here is tied to a particular LAN. This box is meant to be handed
+  # over, plugged into ethernet and power on someone else's network, and come
+  # up unattended - so no static address, gateway or resolver is set, because
+  # every one of those would be wrong somewhere else. NetworkManager runs DHCP
+  # on both links and autoconnects the wired one, which wins on route metric
+  # whenever a cable is present; WiFi is the fallback.
   #
-  # The mechanism: the NetworkManager module sets `networking.useDHCP = false`
-  # at normal priority, which silently overrode the `mkDefault true` here and
-  # in profiles/global.nix. That disabled dhcpcd outright and left NM as the
-  # sole DHCP client - and NM sends a different DHCP client identifier, so the
-  # router handed out a different lease.
-  #
-  # 10.0.0.249 must sit OUTSIDE the router's DHCP pool, or the router will
-  # eventually lease it to something else. Check the pool before deploying.
-  networking.useDHCP = false;
-  networking.interfaces.eno2 = {
-    useDHCP = false;
-    ipv4.addresses = [{
-      address = "10.0.0.249";
-      prefixLength = 24;
-    }];
-  };
-  networking.defaultGateway = {
-    address = "10.0.0.1";
-    interface = "eno2";
-  };
-  # Static addressing means no DHCP-supplied resolvers. Tailscale still
-  # overlays MagicDNS on top of these when it is up.
-  networking.nameservers = [ "10.0.0.1" "1.1.1.1" ];
+  # (A static 10.0.0.249 lived here briefly. It was never needed: the address
+  # that appeared to "move" was a DHCP lease on wlo1 while eno2 had no
+  # carrier. Check `ip -br link` for NO-CARRIER before suspecting addressing.)
+  networking.networkmanager.enable = true;
 
-  # NetworkManager is here for WiFi only. The `unmanaged` list is what keeps it
-  # off the wired NICs, so it cannot re-address them behind the static config
-  # above. eno1 is listed as well as eno2: NM claims every wired NIC it finds,
-  # and a second interface coming up on the same subnet is what makes inbound
-  # traffic and ARP replies stop lining up with the cabled port.
-  networking.networkmanager = {
-    enable = true;
-    unmanaged = [
-      "interface-name:eno1"
-      "interface-name:eno2"
-    ];
+  # Without this the kernel keeps routes belonging to a link that has no
+  # carrier, so an unplugged eno2 black-holes LAN traffic instead of falling
+  # back to WiFi. With it set, those routes show as `dead linkdown` and are
+  # skipped during lookup.
+  boot.kernel.sysctl = {
+    "net.ipv4.conf.all.ignore_routes_with_linkdown" = 1;
+    "net.ipv4.conf.default.ignore_routes_with_linkdown" = 1;
   };
 
   networking.firewall = {
