@@ -67,19 +67,6 @@ in
         description = "Media directories for boat-ray to scan and sync into.";
         default = [ "${config.mySystem.dataFolder}/media" ];
       };
-      peerAddress = mkOption {
-        type = lib.types.nullOr lib.types.str;
-        description = ''
-          Address of the peer boat-ray instance as `host:port`.
-
-          Use the peer's tailnet MagicDNS name (e.g.
-          `sophie-001-1:${builtins.toString grpcPort}`) rather
-          than a LAN/WAN address, so the connection resolves to the peer's
-          tailscale IP and rides the tailnet.
-        '';
-        default = null;
-        example = "sophie-001-1:${builtins.toString grpcPort}";
-      };
     };
 
   config = mkIf cfg.enable {
