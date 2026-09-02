@@ -221,6 +221,23 @@
     # out. Loose mode only requires that a route back exists at all.
     checkReversePath = "loose";
   };
+  # mDNS, so the box is findable as `cassie-box.local` without anyone knowing
+  # its address. This is the piece that makes "plug in ethernet and power" work
+  # on a network nobody has configured: DHCP hands out an arbitrary address,
+  # and this is how you find it again.
+  #
+  # nssmdns4 also lets the box itself resolve other .local names.
+  services.avahi = {
+    enable = true;
+    nssmdns4 = true;
+    openFirewall = true;
+    publish = {
+      enable = true;
+      addresses = true;
+      workstation = true;
+    };
+  };
+
   services.samba = {
     enable = true;
     openFirewall = true;
