@@ -14,7 +14,9 @@ let
   # "boat-ray" system user/group (see inputs.boat-ray.nixosModules.default).
   user = "boat-ray";
   group = "boat-ray";
-  httpPort = 3000; # int - HTTP API + web UI
+  # 3000 is already taken on this host: the homepage container publishes
+  # 127.0.0.1:3000:3000, so boat-ray binding 3000 died with EADDRINUSE.
+  httpPort = 3001; # int - HTTP API + web UI
   grpcPort = 50051; # int - gRPC peer communication
   appFolder = "/mnt/data/appdata/${app}";
   url = "${app}.${config.networking.domain}";
@@ -85,6 +87,13 @@ in
       assertion = inputs ? boat-ray;
       message = "mySystem.services.boat-ray.enable requires a `boat-ray` flake input (inputs.boat-ray.nixosModules.default).";
     }];
+
+    # Host port registry (nixos/modules/nixos/ports.nix): declaring these makes
+    # a collision an eval error instead of an EADDRINUSE crash loop.
+    mySystem.ports.claims = {
+      "${app}-http" = { port = httpPort; claimedBy = "${app} HTTP/UI"; };
+      "${app}-grpc" = { port = grpcPort; claimedBy = "${app} gRPC peer"; };
+    };
 
     # boat-ray transfers files into the media directories, so its service user
     # needs membership in the `media` group (media root is root:media 0775).

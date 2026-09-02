@@ -8,6 +8,7 @@ with lib;
     ./editor
     ./containers
     ./lib.nix
+    ./ports.nix
     ./security
   ];
 
