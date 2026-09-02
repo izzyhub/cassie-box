@@ -15,7 +15,18 @@ let
       pkgs.coreutils
       pkgs.gnugrep
       pkgs.systemd
+      pkgs.nftables
+      pkgs.iptables
+      pkgs.iw
     ]}:$PATH
+
+    log=/var/log/net-diag.log
+
+    # This reached 20MB in two hours at the original cadence. Keep the tail
+    # rather than let a debug aid fill the root filesystem.
+    if [ -f "$log" ] && [ "$(stat -c %s "$log")" -gt 5242880 ]; then
+      tail -c 1048576 "$log" > "$log.tmp" && mv "$log.tmp" "$log"
+    fi
 
     {
       echo "======== $(date -Is) uptime=$(cut -d' ' -f1 /proc/uptime)s ========"
@@ -37,8 +48,18 @@ let
       cat /etc/resolv.conf 2>&1 || true
       echo "--- listening sockets ---"
       ss -lntu
+      echo "--- firewall ruleset ---"
+      nft list ruleset 2>&1 | head -120 || true
+      iptables-save 2>&1 | head -80 || true
+      echo "--- wifi association ---"
+      iw dev 2>&1 || true
+      iw dev wlo1 link 2>&1 || true
+      echo "--- ddclient unit ---"
+      systemctl status ddclient.service --no-pager --lines=0 2>&1 || true
+      echo "--- ddclient log (this boot) ---"
+      journalctl -u ddclient.service -b --no-pager --lines=30 2>&1 || true
       echo
-    } >> /var/log/net-diag.log 2>&1
+    } >> "$log" 2>&1
   '';
 in
 {
@@ -56,7 +77,7 @@ in
     timerConfig = {
       # Start early enough to catch the drop-off, which happens seconds in.
       OnBootSec = "2s";
-      OnUnitActiveSec = "10s";
+      OnUnitActiveSec = "30s";
       AccuracySec = "1s";
     };
   };
