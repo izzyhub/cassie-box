@@ -68,20 +68,40 @@ in
         default = [ "${config.mySystem.dataFolder}/media" ];
       };
 
+      # These three are `str`/`nullOr str` rather than lists to match the
+      # upstream options they are forwarded to; boat-ray takes exactly one
+      # directory for each, not a search path.
       downloadDir = mkOption {
-        type = lib.types.listOf lib.types.str;
-        description = "Directory where in progress downloads are stored";
-        default = [ "${config.mySystem.dataFolder}/media/boat-ray" ];
+        type = lib.types.str;
+        description = ''
+          Staging directory for in-progress downloads. Only the hidden
+          `.{id}.partial` file lives here - a finished pull is moved to tvDir or
+          movieDir.
+
+          Dot-prefixed and kept inside mediaDirs on purpose: the scanner and the
+          watcher both skip hidden names, so staging is invisible to the library,
+          while sharing a filesystem with the landing directories keeps the final
+          step a rename instead of a whole-file copy.
+        '';
+        default = "${config.mySystem.dataFolder}/media/.boat-ray-incoming";
       };
       tvDir = mkOption {
-        type = lib.types.listOf lib.types.str;
-        description = "Where a finished tv episode is stored";
-        default = [ "${config.mySystem.dataFolder}/media/tv" ];
+        type = lib.types.nullOr lib.types.str;
+        description = ''
+          Where a finished episode is filed, as `<Show Title>/Season NN/<file>`.
+          Must be inside one of mediaDirs, or the file is written and then never
+          scanned into the library. Null leaves episodes in downloadDir.
+        '';
+        default = "${config.mySystem.dataFolder}/media/tv";
       };
       movieDir = mkOption {
-        type = lib.types.listOf lib.types.str;
-        description = "Where a finished movie is stored";
-        default = [ "${config.mySystem.dataFolder}/media/movies" ];
+        type = lib.types.nullOr lib.types.str;
+        description = ''
+          Where a finished movie is filed, under the peer's own filename. Must be
+          inside one of mediaDirs, or the file is written and then never scanned
+          into the library. Null leaves movies in downloadDir.
+        '';
+        default = "${config.mySystem.dataFolder}/media/movies";
       };
     };
 
@@ -117,6 +137,28 @@ in
       "d ${appFolder}/cache 0750 ${user} ${group} -"
     ];
 
+    # Upstream's module emits `d <dir> 0755 boat-ray boat-ray -` for each of
+    # downloadDir, tvDir and movieDir. For the staging directory that is right -
+    # boat-ray creates it and nothing else touches it. For the two library
+    # directories it is not: they are created and owned at runtime by the *arr
+    # stack (`kah:kah 0755`), not by Nix, and systemd-tmpfiles applies mode and
+    # ownership to a directory that already exists. Left alone, that rule chowns
+    # the live TV and movie trees to boat-ray:boat-ray on the next tmpfiles run
+    # and takes write access away from sonarr and radarr.
+    #
+    # These entries win because systemd-tmpfiles keeps the first line it reads
+    # for a path and ignores later duplicates, and it reads files in
+    # lexicographic order: `00-boat-ray-media.conf` sorts ahead of the
+    # `00-nixos.conf` that every `systemd.tmpfiles.rules` entry - upstream's
+    # included - is concatenated into. Mode, user and group are all `-`, which
+    # for a directory that already exists means "change nothing"; only a missing
+    # directory is created, and then with tmpfiles' own defaults rather than with
+    # ownership this module has no business asserting.
+    systemd.tmpfiles.settings."00-boat-ray-media" =
+      lib.genAttrs
+        (lib.filter (d: d != null) [ cfg.tvDir cfg.movieDir ])
+        (_: { d = { }; });
+
     environment.persistence."${config.mySystem.persistentFolder}" = lib.mkIf config.mySystem.system.impermanence.enable {
       directories = [{ directory = appFolder; inherit user group; mode = "750"; }];
     };
@@ -129,6 +171,12 @@ in
       cacheDir = "${appFolder}/cache";
       mediaDirs = cfg.mediaDirs;
       peerAddress = cfg.peerAddress;
+      # Without these three forwarded, upstream keeps its own defaults:
+      # downloadDir=/var/lib/boat-ray/downloads with tvDir/movieDir unset, which
+      # means "leave a finished pull in the download directory". That directory
+      # is outside mediaDirs, so the watcher never sees the file and a completed
+      # download never reaches the library.
+      inherit (cfg) downloadDir tvDir movieDir;
       # TMDB/TVDB keys (and any other env) decrypted by sops at runtime.
       environmentFile = config.sops.secrets."${category}/${app}/env".path;
     };
