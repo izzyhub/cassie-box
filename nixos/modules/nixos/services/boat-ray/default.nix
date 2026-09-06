@@ -71,7 +71,7 @@ in
       downloadDir = mkOption {
         type = lib.types.listOf lib.types.str;
         description = "Directory where in progress downloads are stored";
-        default = [ "/var/lib/boat-ray/downloads" ];
+        default = [ "${config.mySystem.dataFolder}/boat-ray" ];
       };
       tvDir = mkOption {
         type = lib.types.listOf lib.types.str;
