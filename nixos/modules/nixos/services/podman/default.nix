@@ -42,10 +42,14 @@ in
       users.users.kah = {
         uid = 568;
         group = "kah";
+        # The shared media trees are group-owned by `media` so that the *arr
+        # stack and boat-ray can both write them; `kah` is the user every *arr
+        # runs as, so it needs that group to keep writing the library it owns.
+        extraGroups = [ "media" ];
       };
       users.groups.kah = {
         gid = 568;
-       };
+      };
       users.users.cassie.extraGroups = [ "kah" ];
       users.users.izzy.extraGroups = [ "kah" ];
     };

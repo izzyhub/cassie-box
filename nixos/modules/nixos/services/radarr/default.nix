@@ -76,6 +76,15 @@ in
     };
 
 
+    # Radarr and boat-ray both write into the shared movie tree, which is
+    # `root:media 2775` so the two can share it (see the boat-ray module). The
+    # setgid bit carries `media` down to the directories radarr creates but not
+    # the group write bit, so without this they come out 0755 and boat-ray
+    # cannot file a movie into them.
+    # mkForce: the upstream servarr module hardcodes UMask = "0022"
+    # (nixos/modules/services/misc/servarr/radarr.nix), with no option to set it.
+    systemd.services.radarr.serviceConfig.UMask = lib.mkForce "0002";
+
     ## service
     services.radarr = {
       enable = true;

@@ -137,27 +137,34 @@ in
       "d ${appFolder}/cache 0750 ${user} ${group} -"
     ];
 
-    # Upstream's module emits `d <dir> 0755 boat-ray boat-ray -` for each of
-    # downloadDir, tvDir and movieDir. For the staging directory that is right -
-    # boat-ray creates it and nothing else touches it. For the two library
-    # directories it is not: they are created and owned at runtime by the *arr
-    # stack (`kah:kah 0755`), not by Nix, and systemd-tmpfiles applies mode and
-    # ownership to a directory that already exists. Left alone, that rule chowns
-    # the live TV and movie trees to boat-ray:boat-ray on the next tmpfiles run
-    # and takes write access away from sonarr and radarr.
+    # The TV and movie trees are now shared between the *arr stack and boat-ray,
+    # so they are declared here the way system/basic.nix declares every other
+    # shared media directory - `root:media`, group-writable - rather than left
+    # to whichever service happened to create them first (they existed as
+    # `kah:kah 0755`, which no second writer can use).
     #
-    # These entries win because systemd-tmpfiles keeps the first line it reads
-    # for a path and ignores later duplicates, and it reads files in
-    # lexicographic order: `00-boat-ray-media.conf` sorts ahead of the
+    # 2775 rather than 0775: the setgid bit makes a subdirectory inherit `media`
+    # from its parent, so a show directory sonarr creates stays writable by
+    # boat-ray and a season directory boat-ray creates stays writable by sonarr.
+    # Setgid carries the group down but not the write bit, so both services also
+    # need UMask=0002 - see below for boat-ray, and the sonarr/radarr modules for
+    # the other side.
+    #
+    # This has to be a `settings` file rather than a `rules` entry, and it has to
+    # sort where it does. boat-ray's upstream module emits
+    # `d <dir> 0755 boat-ray boat-ray -` for every directory it is handed, which
+    # for a directory that already exists is applied, not skipped - it would chown
+    # these two trees out from under sonarr and radarr. systemd-tmpfiles keeps the
+    # first line it reads for a path and ignores later duplicates, and reads files
+    # in lexicographic order, so `00-boat-ray-media.conf` beats the shared
     # `00-nixos.conf` that every `systemd.tmpfiles.rules` entry - upstream's
-    # included - is concatenated into. Mode, user and group are all `-`, which
-    # for a directory that already exists means "change nothing"; only a missing
-    # directory is created, and then with tmpfiles' own defaults rather than with
-    # ownership this module has no business asserting.
+    # included - is concatenated into. Ordering *within* that shared file would
+    # depend on module merge order, which is why this does not live in basic.nix
+    # next to the media directories it otherwise belongs with.
     systemd.tmpfiles.settings."00-boat-ray-media" =
       lib.genAttrs
         (lib.filter (d: d != null) [ cfg.tvDir cfg.movieDir ])
-        (_: { d = { }; });
+        (_: { d = { mode = "2775"; user = "root"; group = "media"; }; });
 
     environment.persistence."${config.mySystem.persistentFolder}" = lib.mkIf config.mySystem.system.impermanence.enable {
       directories = [{ directory = appFolder; inherit user group; mode = "750"; }];
@@ -201,12 +208,22 @@ in
       wants = [ "network-online.target" ];
       requires = lib.optional config.services.tailscale.enable "tailscaled.service";
 
+      serviceConfig = {
+        # Whatever boat-ray files into the shared TV and movie trees has to stay
+        # writable by the *arr stack. The setgid bit on those trees carries the
+        # `media` group down to the season directories boat-ray creates, but not
+        # the group write bit: with the default 0022 they come out
+        # 0775 & ~0022 = 0755 and sonarr cannot write into a season boat-ray got
+        # to first.
+        UMask = "0002";
+      }
+
       # tailscaled being *started* doesn't mean the tailnet is usable yet:
       # MagicDNS only answers once the node has come up and pulled the netmap.
       # Wait (bounded) for the peer name to resolve so the first connection
       # attempt doesn't fail on NXDOMAIN. Never fails the unit - boat-ray's
       # Restart=on-failure handles a peer that is genuinely down.
-      serviceConfig = lib.optionalAttrs (cfg.peerAddress != null) {
+      // lib.optionalAttrs (cfg.peerAddress != null) {
         ExecStartPre = [
           "${pkgs.writeShellScript "${app}-wait-for-peer-dns" ''
             host="${lib.head (lib.splitString ":" cfg.peerAddress)}"

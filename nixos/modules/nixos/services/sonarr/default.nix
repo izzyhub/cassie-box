@@ -71,6 +71,16 @@ in
     };
 
 
+
+    # Sonarr and boat-ray both write into the shared TV tree, which is
+    # `root:media 2775` so the two can share it (see the boat-ray module). The
+    # setgid bit carries `media` down to the show and season directories sonarr
+    # creates but not the group write bit, so without this they come out 0755
+    # and boat-ray cannot file an episode into them.
+    # mkForce: the upstream servarr module hardcodes UMask = "0022"
+    # (nixos/modules/services/misc/servarr/sonarr.nix), with no option to set it.
+    systemd.services.sonarr.serviceConfig.UMask = lib.mkForce "0002";
+
     ## service
     services.sonarr = {
       enable = true;
@@ -79,7 +89,7 @@ in
       settings = {
         server = {
           port = port;
-    };
+        };
       };
     };
 
