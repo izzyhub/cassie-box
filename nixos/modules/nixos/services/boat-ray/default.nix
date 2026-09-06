@@ -67,6 +67,22 @@ in
         description = "Media directories for boat-ray to scan and sync into.";
         default = [ "${config.mySystem.dataFolder}/media" ];
       };
+
+      downloadDir = mkOption {
+        type = lib.types.listOf lib.types.str;
+        description = "Directory where in progress downloads are stored";
+        default = [ "/var/lib/boat-ray/downloads" ];
+      };
+      tvDir = mkOption {
+        type = lib.types.listOf lib.types.str;
+        description = "Where a finished tv episode is stored";
+        default = [ "${config.mySystem.dataFolder}/media/tv" ];
+      };
+      movieDir = mkOption {
+        type = lib.types.listOf lib.types.str;
+        description = "Where a finished movie is stored";
+        default = [ "${config.mySystem.dataFolder}/media/movies" ];
+      };
     };
 
   config = mkIf cfg.enable {

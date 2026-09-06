@@ -34,8 +34,9 @@
   networking = {
     useDHCP = lib.mkDefault false;
     firewall.allowedTCPPorts = [ 22 ];
+    # NetworkManager manages wpa_supplicant itself; don't set
+    # networking.wireless.enable here or it conflicts with that.
     networkmanager.enable = true;
-    wireless.enable = false;
   };
 
   # Basic hardware support
