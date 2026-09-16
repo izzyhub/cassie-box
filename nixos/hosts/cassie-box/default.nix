@@ -95,7 +95,7 @@
     plex.enable = true;
     maintainerr.enable = true;
     immich.enable = true;
-    #romm.enable = true;
+    romm.enable = true;
     filebrowser.enable = true;
     syncthing = {
       enable = true;

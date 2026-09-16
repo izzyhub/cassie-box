@@ -11,7 +11,10 @@ let
   description = "ROM Manager";
   user = "kah";
   group = "kah";
-  port = 3000;
+  # Not 3000: the homepage container already publishes 127.0.0.1:3000:3000,
+  # and mySystem.ports would fail the build on the overlap (romm publishes on
+  # every interface). 8080 stays the *container* port, as upstream expects.
+  port = 3002;
   appFolder = "/mnt/data/appdata/${app}";
   persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
   host = "${app}" + (if cfg.dev then "-dev" else "");
@@ -55,7 +58,7 @@ in
       sopsFile = ./secrets.sops.yaml;
       owner = user;
       inherit group;
-      restartUnits = [ "${app}.service" "${app}-db.service" ];
+      restartUnits = [ "podman-${app}.service" "podman-${app}-db.service" ];
     };
 
     # Folder perms
@@ -64,6 +67,11 @@ in
       "d ${appFolder}/resources 0750 ${user} ${group} -"
       "d ${appFolder}/redis-data 0750 ${user} ${group} -"
       "d ${appFolder}/config 0750 ${user} ${group} -"
+      # mariadb chowns its datadir to the in-container mysql user on first
+      # start; this rule only has to make the parent exist.
+      "d ${appFolder}/db 0750 ${user} ${group} -"
+      "d ${dataFolder}/roms 0750 ${user} ${group} -"
+      "d ${dataFolder}/roms/assets 0750 ${user} ${group} -"
     ];
 
     environment.persistence."${config.mySystem.persistentFolder}" = lib.mkIf config.mySystem.system.impermanence.enable {
@@ -72,7 +80,7 @@ in
 
     virtualisation.oci-containers.containers = {
       "${app}" = {
-        image = "rommapp/romm:latest";
+        image = "rommapp/romm:5.2.0";
         environmentFiles = [ config.sops.secrets."${category}/${app}/env".path ];
         environment = {
           DB_HOST = "${app}-db";
@@ -88,14 +96,14 @@ in
           "${appFolder}/config:/romm/config"
         ];
         dependsOn = [ "${app}-db" ];
-        ports = [ "${builtins.toString port}:8080" ];
+        ports = [ "127.0.0.1:${builtins.toString port}:8080" ];
         extraOptions = [
           "--dns=10.88.0.1"
         ];
       };
 
       "${app}-db" = {
-        image = "mariadb:latest";
+        image = "mariadb:11.4";
         environmentFiles = [ config.sops.secrets."${category}/${app}/env".path ];
         environment = {
           MARIADB_DATABASE = app;

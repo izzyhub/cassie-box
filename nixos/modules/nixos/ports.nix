@@ -5,8 +5,10 @@ let
 
   # A port is only contended if something else binds it *in the host network
   # namespace*. Container-internal ports don't count: podman gives each
-  # container its own netns, which is why browserless, romm and rxresume can
-  # all listen on 3000 at once without anyone noticing.
+  # container its own netns, which is why browserless and rxresume can both
+  # listen on 3000 at once without anyone noticing. What does contend is a
+  # *published* port - romm used to publish 3000:8080 on every interface, which
+  # overlaps homepage's 127.0.0.1:3000; it publishes 3002 now.
   claimModule = { name, ... }: {
     options = {
       port = mkOption {
