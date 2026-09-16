@@ -41,5 +41,11 @@
     ./vaultwarden
     ./jellyfin
     ./boat-ray
+
+    # academic / stats toolchain
+    ./rstudio-server
+    ./jupyter
+    ./quarto
+    ./languagetool
   ];
 }

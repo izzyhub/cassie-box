@@ -81,6 +81,14 @@
 
     code-server.enable = true;
 
+    # Stats / academic toolchain. RStudio and Jupyter sign in separately:
+    # RStudio uses PAM against real system accounts, Jupyter uses its own
+    # password (see mySystem.services.jupyter.passwordHash).
+    rstudio-server.enable = true;
+    jupyter.enable = true;
+    quarto.enable = true;
+    languagetool.enable = true;
+
     calibre-web.enable = true;
 
     sonarr.enable = true;
@@ -103,9 +111,9 @@
     };
     navidrome.enable = true;
     paperless.enable = true;
-    redbot.enable=true;
-    silverbullet.enable=true;
-    tandoor.enable=true;
+    redbot.enable = true;
+    silverbullet.enable = true;
+    tandoor.enable = true;
     boat-ray = {
       enable = true;
       # Peer reached over the tailnet by its MagicDNS name.

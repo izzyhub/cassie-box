@@ -6,15 +6,12 @@
 with lib;
 let
   cfg = config.mySystem.${category}.${app};
-  app = "%{app}";
-  category = "%{cat}";
-  description = "%{description}";
-  image = "%{image}";
-  user = "%{user kah}"; #string
-  group = "%{group kah}"; #string
-  port = 1234; #int
-  appFolder = "/mnt/data/appdata/${app}";
-  persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
+  app = "languagetool";
+  category = "services";
+  description = "Self-hosted grammar and style checking";
+  # 8081 is LanguageTool's upstream default, but the calibre container
+  # publishes 8081 on every interface already.
+  port = 8082; #int
   host = "${app}" + (if cfg.dev then "-dev" else "");
   url = "${host}.${config.networking.domain}";
 in
@@ -47,55 +44,41 @@ in
           description = "Development instance";
           default = false;
         };
-      backup = mkOption
+      allowOrigin = mkOption
         {
-          type = lib.types.bool;
-          description = "Enable backups";
-          default = true;
+          type = lib.types.nullOr lib.types.str;
+          description = ''
+            Access-Control-Allow-Origin for the API. The browser add-ons and the
+            LibreOffice integration call this server directly from pages on
+            other origins, so they need CORS to be permitted.
+          '';
+          default = "*";
         };
-
-
-
+      jvmOptions = mkOption
+        {
+          type = with lib.types; listOf str;
+          description = "Extra JVM flags for the LanguageTool server.";
+          default = [ "-Xmx1g" ];
+        };
     };
 
   config = mkIf cfg.enable {
 
-    ## Secrets
-    # sops.secrets."${category}/${app}/env" = {
-    #   sopsFile = ./secrets.sops.yaml;
-    #   owner = user;
-    #   group = group;
-    #   restartUnits = [ "${app}.service" ];
-    # };
-
-    users.users.cassie.extraGroups = [ group ];
-    users.users.izzy.extraGroups = [ group ];
-
-
-    # Folder perms - only for containers
-    # systemd.tmpfiles.rules = [
-    # "d ${persistentFolder}/ 0750 ${user} ${group} -"
-    # ];
-
-    environment.persistence."${config.mySystem.persistentFolder}" = lib.mkIf config.mySystem.system.impermanence.enable {
-      directories = [{ directory = appFolder; inherit user; inherit group; mode = "750"; }];
+    # Host port registry (nixos/modules/nixos/ports.nix).
+    mySystem.ports.claims = {
+      "${app}-http" = { port = port; address = "127.0.0.1"; claimedBy = "${app} API"; };
     };
 
-
-    ## service
-    # services.test= {
-    #   enable = true;
-    # };
-
-    ## OR
-
-    # virtualisation.oci-containers.containers = config.lib.mySystem.mkContainer {
-    #   inherit app image user group;
-    #   env = [ ];
-    #   ports = [ ];
-    #   environmentFiles = [ ];
-    # };
-
+    # No backups and no appdata folder on purpose: the upstream module runs
+    # this under DynamicUser with no state directory. Everything it knows is in
+    # the package, so a rebuild is the whole restore path.
+    services.languagetool = {
+      enable = true;
+      inherit port;
+      # Stays on loopback; nginx is the only thing in front of it.
+      public = false;
+      inherit (cfg) allowOrigin jvmOptions;
+    };
 
     # homepage integration
     mySystem.services.homepage.infrastructure = mkIf cfg.addToHomepage [
@@ -113,9 +96,11 @@ in
       {
         name = app;
         group = "${category}";
-        url = "https://${url}";
+        # `/` is a 404 - this server is an API, not a site. /v2/languages is the
+        # cheapest endpoint that proves the JVM is actually up.
+        url = "https://${url}/v2/languages";
         interval = "1m";
-        conditions = [ "[CONNECTED] == true" "[STATUS] == 200" "[RESPONSE_TIME] < 50" ];
+        conditions = [ "[CONNECTED] == true" "[STATUS] == 200" "[RESPONSE_TIME] < 500" ];
       }
     ];
 
@@ -125,32 +110,12 @@ in
       useACMEHost = config.networking.domain;
       locations."^~ /" = {
         proxyPass = "http://127.0.0.1:${builtins.toString port}";
+        # Checking a whole chapter in one request goes well past the 1m default.
+        extraConfig = ''
+          client_max_body_size 32m;
+        '';
       };
     };
 
-    ### firewall config
-
-    # networking.firewall = mkIf cfg.openFirewall {
-    #   allowedTCPPorts = [ port ];
-    #   allowedUDPPorts = [ port ];
-    # };
-
-    ### backups
-    warnings = [
-      (mkIf (!cfg.backup && config.mySystem.purpose != "Development")
-        "WARNING: Backups for ${app} are disabled!")
-    ];
-
-    services.restic.backups = mkIf cfg.backup (config.lib.mySystem.mkRestic
-      {
-        inherit app user;
-        paths = [ appFolder ];
-        inherit appFolder;
-      });
-
-
-    # services.postgresqlBackup = {
-    #   databases = [ app ];
-    # };
   };
 }
