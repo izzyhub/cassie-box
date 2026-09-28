@@ -59,6 +59,33 @@
     ];
   };
 
+  # r-V8 fails its load test with undefined `icu_78::...` symbols. nodejs 22's
+  # static libv8.a is now built against system ICU (its v8.pc lists
+  # `-licui18n -licuuc`), but V8's configure only links `-lv8`. Supply the
+  # full link line via the V8_PKG_LIBS hook configure already honours, using
+  # the same ICU node was built with. Pulled in by rPackages.gt (via
+  # juicyjuice) in the rstudio-server module. Drop once nixpkgs fixes it.
+  r-v8-icu = _final: prev: {
+    rPackages = prev.rPackages.override {
+      overrides = {
+        V8 = prev.rPackages.V8.overrideAttrs (old:
+          let
+            libv8 = prev.nodejs-slim_22.libv8;
+            # Must be node's ICU exactly (78 here); pkgs.icu lags behind.
+            icu = prev.lib.findFirst (p: prev.lib.hasPrefix "icu4c-" (p.name or ""))
+              (throw "r-v8-icu: nodejs-slim_22 no longer has icu4c in buildInputs")
+              prev.nodejs-slim_22.buildInputs;
+          in
+          {
+            buildInputs = (old.buildInputs or [ ]) ++ [ icu ];
+            env = (old.env or { }) // {
+              V8_PKG_LIBS = "-L${libv8}/lib -lv8 -pthread -L${icu}/lib -licui18n -licuuc";
+            };
+          });
+      };
+    };
+  };
+
   # nixpkgs-overlays = final: prev: {
   #   tandoor-recipes = prev.tandoor-recipes.overridePythonAttrs (old: {
   #     doCheck = false;
