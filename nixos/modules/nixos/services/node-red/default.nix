@@ -27,13 +27,10 @@ in
       enable = true;
     };
 
-    services.nginx.virtualHosts."${app}.${config.networking.domain}" = {
-      useACMEHost = config.networking.domain;
-      forceSSL = true;
-      locations."^~ /" = {
-        proxyPass = "http://127.0.0.1:${builtins.toString config.services.node-red.port}";
-        proxyWebsockets = true;
-      };
+    services.nginx.virtualHosts = config.lib.mySystem.mkVhost {
+      inherit app;
+      inherit (config.services.node-red) port;
+      websockets = true;
     };
 
     environment.persistence."${config.mySystem.persistentFolder}" = lib.mkIf config.mySystem.system.impermanence.enable {

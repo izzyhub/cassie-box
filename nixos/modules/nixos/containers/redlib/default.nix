@@ -109,13 +109,10 @@ in
     ];
 
     ### Ingress
-    services.nginx.virtualHosts.${url} = {
-      useACMEHost = config.networking.domain;
-      forceSSL = true;
-      locations."^~ /" = {
-        proxyPass = "http://${app}:${builtins.toString port}";
-        extraConfig = "resolver 10.88.0.1;";
-      };
+    services.nginx.virtualHosts = config.lib.mySystem.mkVhost {
+      inherit app port;
+      host = url;
+      container = true;
     };
 
     ### firewall config

@@ -105,16 +105,11 @@ in
     ];
 
     ### Ingress
-    services.nginx.virtualHosts.${url} = {
-      forceSSL = true;
-      useACMEHost = config.networking.domain;
-      locations."^~ /" = {
-        proxyPass = "http://127.0.0.1:${builtins.toString port}";
-        # Checking a whole chapter in one request goes well past the 1m default.
-        extraConfig = ''
-          client_max_body_size 32m;
-        '';
-      };
+    services.nginx.virtualHosts = config.lib.mySystem.mkVhost {
+      inherit app port;
+      host = url;
+      # Checking a whole chapter in one request goes well past the 1m default.
+      maxBodySize = "32m";
     };
 
   };

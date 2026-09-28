@@ -166,13 +166,11 @@ in
       };
       user = "cassie";
     };
-    services.nginx.virtualHosts."code-${config.networking.hostName}.${config.networking.domain}" = {
-      useACMEHost = config.networking.domain;
-      forceSSL = true;
-      locations."^~ /" = {
-        proxyPass = "http://127.0.0.1:${builtins.toString config.services.code-server.port}";
-        proxyWebsockets = true;
-      };
+    services.nginx.virtualHosts = config.lib.mySystem.mkVhost {
+      inherit app;
+      host = url;
+      inherit (config.services.code-server) port;
+      websockets = true;
     };
 
     mySystem.services.homepage.infrastructure = mkIf cfg.addToHomepage [

@@ -143,13 +143,10 @@ in
     ];
 
     ### Ingress
-    services.nginx.virtualHosts.${url} = {
-      forceSSL = true;
-      useACMEHost = config.networking.domain;
-      locations."^~ /" = {
-        proxyPass = "http://127.0.0.1:${builtins.toString port}";
-        proxyWebsockets = true;
-      };
+    services.nginx.virtualHosts = config.lib.mySystem.mkVhost {
+      inherit app port;
+      host = url;
+      websockets = true;
     };
 
     ### backups

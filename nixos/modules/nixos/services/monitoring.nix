@@ -82,12 +82,10 @@ in
       };
     };
 
-    services.nginx.virtualHosts.${urlVmAgent} = {
-      forceSSL = true;
-      useACMEHost = config.networking.domain;
-      locations."^~ /" = {
-        proxyPass = "http://127.0.0.1:${builtins.toString portVmAgent}";
-      };
+    services.nginx.virtualHosts = config.lib.mySystem.mkVhost {
+      app = "vmagent";
+      host = urlVmAgent;
+      port = portVmAgent;
     };
 
 

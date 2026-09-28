@@ -197,20 +197,17 @@ in
     ];
 
     ### Ingress
-    services.nginx.virtualHosts.${url} = {
-      forceSSL = true;
-      useACMEHost = config.networking.domain;
-      locations."^~ /" = {
-        proxyPass = "http://127.0.0.1:${builtins.toString port}";
-        # Kernel comms are websockets, and a long-running cell must not be cut
-        # off by the default 60s proxy read timeout.
-        proxyWebsockets = true;
-        extraConfig = ''
-          proxy_read_timeout 3600s;
-          proxy_send_timeout 3600s;
-          client_max_body_size 0;
-        '';
-      };
+    services.nginx.virtualHosts = config.lib.mySystem.mkVhost {
+      inherit app port;
+      host = url;
+      # Kernel comms are websockets, and a long-running cell must not be cut
+      # off by the default 60s proxy read timeout.
+      websockets = true;
+      extraLocationConfig = ''
+        proxy_read_timeout 3600s;
+        proxy_send_timeout 3600s;
+        client_max_body_size 0;
+      '';
     };
 
     ### backups

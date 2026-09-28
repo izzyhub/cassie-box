@@ -188,32 +188,11 @@ in
 
     ### Ingress
     # victoriametrics
-    services.nginx.virtualHosts.${url} = {
-      forceSSL = true;
-      useACMEHost = config.networking.domain;
-      locations."^~ /" = {
-        proxyPass = "http://127.0.0.1:${builtins.toString port}";
-      };
-    };
-
-    # alertmanager
-    services.nginx.virtualHosts.${urlAM} = {
-      forceSSL = true;
-      useACMEHost = config.networking.domain;
-      locations."^~ /" = {
-        proxyPass = "http://127.0.0.1:${builtins.toString portAM}";
-      };
-    };
-
-    # vmalert
-    services.nginx.virtualHosts.${urlVAM} = {
-      forceSSL = true;
-      useACMEHost = config.networking.domain;
-      locations."^~ /" = {
-        proxyPass = "http://127.0.0.1:${builtins.toString portVAM}";
-        proxyWebsockets = true;
-      };
-    };
+    services.nginx.virtualHosts =
+      config.lib.mySystem.mkVhost { inherit app port; host = url; }
+      // config.lib.mySystem.mkVhost { app = "alertmanager"; host = urlAM; port = portAM; }
+      // config.lib.mySystem.mkVhost { app = "vmalert"; host = urlVAM; port = portVAM; websockets = true; }
+      ;
 
 
 

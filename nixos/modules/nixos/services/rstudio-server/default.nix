@@ -158,21 +158,18 @@ in
     ];
 
     ### Ingress
-    services.nginx.virtualHosts.${url} = {
-      forceSSL = true;
-      useACMEHost = config.networking.domain;
-      locations."^~ /" = {
-        proxyPass = "http://127.0.0.1:${builtins.toString port}";
-        # RStudio drives the whole IDE over a websocket, and a long-running
-        # chunk must not be cut off mid-render by the default 60s proxy read
-        # timeout.
-        proxyWebsockets = true;
-        extraConfig = ''
-          proxy_read_timeout 3600s;
-          proxy_send_timeout 3600s;
-          client_max_body_size 0;
-        '';
-      };
+    services.nginx.virtualHosts = config.lib.mySystem.mkVhost {
+      inherit app port;
+      host = url;
+      # RStudio drives the whole IDE over a websocket, and a long-running
+      # chunk must not be cut off mid-render by the default 60s proxy read
+      # timeout.
+      websockets = true;
+      extraLocationConfig = ''
+        proxy_read_timeout 3600s;
+        proxy_send_timeout 3600s;
+        client_max_body_size 0;
+      '';
     };
 
     ### backups

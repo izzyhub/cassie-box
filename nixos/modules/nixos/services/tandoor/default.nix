@@ -125,14 +125,13 @@ in
     users.groups.tandoor-recipes.members = [ "nginx" ];
 
     ### Ingress
-    services.nginx.virtualHosts.${url} = {
-      forceSSL = true;
-      useACMEHost = config.networking.domain;
-      locations."/media/".alias = "/var/lib/tandoor-recipes/media/"; # needed to show images
-      locations."^~ /" = {
-        proxyPass = "http://127.0.0.1:${builtins.toString port}";
-      };
-    };
+    services.nginx.virtualHosts = mkMerge [
+      (config.lib.mySystem.mkVhost {
+        inherit app port;
+        host = url;
+      })
+      { ${url}.locations."/media/".alias = "/var/lib/tandoor-recipes/media/"; } # needed to show images
+    ];
 
     ### firewall config
 

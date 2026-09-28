@@ -200,19 +200,12 @@ in
     ];
 
     ### Ingress
-    services.nginx.virtualHosts.${url} = {
-      forceSSL = true;
-      useACMEHost = config.networking.domain;
-      locations."^~ /" = {
-        proxyPass = "http://127.0.0.1:${builtins.toString port}";
-        proxyWebsockets = true;
-      };
-      extraConfig = ''
-        client_max_body_size 0;
-        proxy_connect_timeout 600;
-        proxy_read_timeout 600;
-        proxy_send_timeout 600;
-      '';
+    services.nginx.virtualHosts = config.lib.mySystem.mkVhost {
+      inherit app port;
+      host = url;
+      websockets = true;
+      maxBodySize = "0";
+      longTimeouts = true;
     };
 
     ### firewall config

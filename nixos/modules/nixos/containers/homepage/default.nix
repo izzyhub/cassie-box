@@ -249,12 +249,8 @@ in
       ];
     };
 
-    services.nginx.virtualHosts."${app}.${config.networking.domain}" = {
-      useACMEHost = config.networking.domain;
-      forceSSL = true;
-      locations."^~ /" = {
-        proxyPass = "http://127.0.0.1:${builtins.toString port}";
-      };
+    services.nginx.virtualHosts = config.lib.mySystem.mkVhost {
+      inherit app port;
     };
 
 

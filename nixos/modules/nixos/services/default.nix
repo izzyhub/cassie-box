@@ -20,6 +20,7 @@
     ./radicale
     ./node-red
     ./nginx
+    ./sso
     ./calibre-web
     ./rss-bridge
     ./paperless

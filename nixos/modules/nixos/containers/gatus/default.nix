@@ -99,13 +99,9 @@ in
       extraOptions = [ "--cap-add=NET_RAW" ]; # Required for ping/etc to do monitoring
     };
 
-    services.nginx.virtualHosts."${app}.${config.networking.domain}" = {
-      useACMEHost = config.networking.domain;
-      forceSSL = true;
-      locations."^~ /" = {
-        proxyPass = "http://${app}:${builtins.toString port}";
-        extraConfig = "resolver 10.88.0.1;";
-      };
+    services.nginx.virtualHosts = config.lib.mySystem.mkVhost {
+      inherit app port;
+      container = true;
     };
 
     services.vmagent = {
