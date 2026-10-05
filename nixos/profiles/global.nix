@@ -28,6 +28,10 @@ with lib;
       domain = "cassies.app";
       internalDomain = "internal.cassies.app";
 
+      # Failure notifications go to ntfy on huci (izzy-nix-config) over the
+      # TAILNET. MagicDNS always resolves this name; LAN DNS at Cassie's may not.
+      notifications.ntfyUrl = "http://huci.tail6b6f7.ts.net:2586";
+
       #shell.zsh.enable = true;
       shell.fish.enable = true;
       # But wont enable plugins globally, leave them for workstations

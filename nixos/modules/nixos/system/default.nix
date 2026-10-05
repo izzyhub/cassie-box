@@ -9,5 +9,6 @@
     ./basic.nix
     ./motd
     ./autoupgrades
+    ./ntfy-alerts
   ];
 }

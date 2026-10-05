@@ -131,6 +131,7 @@
 
     # monitoring
     victoriametrics.enable = true;
+    ntfy-alertmanager.enable = true;
     grafana.enable = true;
     #cockpit.enable = true;
   };

@@ -150,7 +150,7 @@ in
 
     services.vmagent = {
       enable = true;
-      remoteWrite.url = "http://shodan:8428/api/v1/write";
+      remoteWrite.url = "http://127.0.0.1:8428/api/v1/write";
       extraArgs = lib.mkForce [ "-remoteWrite.label=instance=${config.networking.hostName}" ];
       prometheusConfig = {
         scrape_configs = [

@@ -5,7 +5,8 @@ lib.mapAttrsToList
     alert = name;
     expr = opts.condition;
     for = opts.time or "2m";
-    labels = { };
+    # ntfy-alertmanager maps severity to the ntfy priority.
+    labels.severity = opts.severity or "warning";
     annotations.description = opts.description;
   }
   )
@@ -57,6 +58,16 @@ lib.mapAttrsToList
   ext4_errors = {
     condition = "ext4_errors_value > 0";
     description = "{{$labels.instance}}: ext4 has reported {{$value}} I/O errors: check /sys/fs/ext4/*/errors_count";
+  };
+
+  # Backstop for the notify-ntfy@ onFailure hook (system/ntfy-alerts): also
+  # catches units that never reach onFailure (e.g. start-limit-hit), and it is
+  # grouped and re-sent daily until fixed. The 15m `for` keeps a deploy's restart
+  # churn quiet.
+  systemd_unit_failed = {
+    condition = ''node_systemd_unit_state{state="failed"} > 0'';
+    time = "15m";
+    description = "{{$labels.instance}}: unit {{$labels.name}} is in the failed state";
   };
 
   alerts_silences_changed = {

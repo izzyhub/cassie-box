@@ -30,6 +30,7 @@
     ./radarr
     ./invidious
     ./victoriametrics
+    ./ntfy-alertmanager
     ./readarr
     ./lidarr
     ./prowlarr

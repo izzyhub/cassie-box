@@ -70,14 +70,18 @@ in
 
   config = mkIf cfg.enable {
 
-    ## Secrets
-    sops.secrets."services/alertmanager/env" = {
-      sopsFile = ./secrets.sops.yaml;
-      owner = "kah";
-      group = "kah";
-      mode = "660";
-      restartUnits = [ "alertmanager.service" ];
-    };
+    # Alerts go Alertmanager -> ntfy-alertmanager (loopback) -> huci's ntfy over the
+    # tailnet. The bridge holds the ntfy token, so Alertmanager needs no secrets.
+    assertions = [
+      {
+        assertion = config.mySystem.services.ntfy-alertmanager.enable;
+        message = ''
+          victoriametrics routes Alertmanager to the ntfy-alertmanager bridge on
+          loopback. Enable mySystem.services.ntfy-alertmanager on this host, or
+          alerts will be posted to a port nothing is listening on.
+        '';
+      }
+    ];
 
     users.users.izzy.extraGroups = [ group ];
     users.users.cassie.extraGroups = [ group ];
@@ -115,51 +119,28 @@ in
 
     services.prometheus.alertmanager = {
       enable = true;
-      environmentFile = config.sops.secrets."services/alertmanager/env".path;
       webExternalUrl = "https://alertmanager.${config.networking.domain}";
       configuration = {
         route = {
-          receiver = "pushover";
-          group_by = [ "alertname" "job" ];
+          receiver = "ntfy";
+          # One notification per (kind of problem, box), and long enough waits
+          # that a deploy's restart churn settles into one message.
+          group_by = [ "alertname" "instance" ];
           group_wait = "5m";
-          group_interval = "1m";
+          group_interval = "5m";
+          # Unfixed problems re-notify daily: a failed unit nobody fixed is still
+          # broken tomorrow.
           repeat_interval = "24h";
         };
         receivers = [
           {
-            name = "pushover";
-            pushover_configs = [{
-              user_key = "$PUSHOVER_USER_KEY";
-              token = "$PUSHOVER_TOKEN";
-              priority = ''{{ if eq .Status " firing " }}1{{ else }}0{{ end }}'';
-              title = ''{{ .CommonLabels.alertname }} [{{ .Status | toUpper }}{{ if eq .Status " firing " }}:{{ .Alerts.Firing | len }}{{ end }}]'';
-              message = ''
-                {{- range .Alerts }}
-                  {{- if ne .Annotations.description "" }}
-                    {{ .Annotations.description }}
-                  {{- else if ne .Annotations.summary "" }}
-                    {{ .Annotations.summary }}
-                  {{- else if ne .Annotations.message "" }}
-                    {{ .Annotations.message }}
-                  {{- else }}
-                    Alert description not available
-                  {{- end }}
-                  {{- if gt (len .Labels.SortedPairs) 0 }}
-                    <small>
-                    {{- range .Labels.SortedPairs }}
-                      <b>{{ .Name }}:</b> {{ .Value }}
-                    {{- end }}
-                    </small>
-                  {{- end }}
-                {{- end }}
-              '';
+            name = "ntfy";
+            # The bridge renders the notification (title, priority from `severity`,
+            # resolved handling); raw webhook JSON at ntfy would be an unreadable blob.
+            webhook_configs = [{
+              url = "http://127.0.0.1:${toString config.mySystem.services.ntfy-alertmanager.listenPort}/";
               send_resolved = true;
-              html = true;
-
             }];
-          }
-          {
-            name = "default";
           }
         ];
       };
