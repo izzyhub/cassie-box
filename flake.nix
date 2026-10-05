@@ -191,21 +191,11 @@
         };
       };
 
-      # Dev shell - provides Python (and pre-commit) so the git pre-commit
-      # hooks can run locally. Enter with `nix develop`.
-      devShells = forAllSystems (system:
-        let
-          pkgs = nixpkgs.legacyPackages.${system};
-        in
-        {
-          default = pkgs.mkShell {
-            packages = with pkgs; [
-              python3
-              pre-commit
-              nixpkgs-fmt
-            ];
-          };
-        });
+      # Dev shell - defined in shell.nix (Python, pre-commit, sops, task, etc.)
+      # so `nix develop` and `nix-shell` give the same environment.
+      devShells = forAllSystems (system: {
+        default = import ./shell.nix { pkgs = nixpkgs.legacyPackages.${system}; };
+      });
 
       # Packages for ISO generation and installation helpers
       packages = forAllSystems (system: {

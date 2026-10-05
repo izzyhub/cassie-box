@@ -20,7 +20,7 @@ let
   python-with-my-packages = my-python.withPackages
     (p: with p; [
       mkdocs-material
-      mkdocs-minify
+      mkdocs-minify-plugin
       pygments
     ]);
 in

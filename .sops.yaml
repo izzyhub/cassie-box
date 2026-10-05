@@ -9,9 +9,11 @@
 # copying one key to each machine
 
 keys:
+  - &izzy age189drlf0mxs3609vfsanpv4htchg4evn9kv9ywazgt89tjywu2ccq60dcr7
   - &Isabelles-MBP age123dsa4ane5583sezln90h5ax8hjyx4c2r5psu6ydxy8k5xtfva6sme6pa0
   - &cassie-box age1lzhjalfd2vw8xva4va459ey4389wdjh59cwn8rvlf0txagvw6f2qdpt6wp
   - &nixpad age1dr2qce574ns7vcyy9q5qwml405maqd2kcp83vyxpuhyw2cquguusdekdtc
+  - &izzy-at-cassie-box age1gen5vrtd8aafhujw7kxnqvjx8775nsmvzchlc8yhzc6zjmz765hq4u6pmn
 
 
 creation_rules:
@@ -21,3 +23,5 @@ creation_rules:
           - *Isabelles-MBP
           - *cassie-box
           - *nixpad
+          - *izzy-at-cassie-box
+          - *izzy
