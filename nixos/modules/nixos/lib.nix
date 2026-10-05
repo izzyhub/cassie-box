@@ -152,49 +152,44 @@ with lib;
   # build a restic restore set for both local and remote
   lib.mySystem.mkRestic = options: (
     let
+      rcfg = config.mySystem.system.resticBackup;
       excludePaths = if builtins.hasAttr "excludePaths" options then options.excludePaths else [ ];
       timerConfig = {
         OnCalendar = "02:05";
         Persistent = true;
         RandomizedDelaySec = "3h";
       };
-      pruneOpts = [
-        "--keep-daily 7"
-        "--keep-weekly 5"
-        "--keep-monthly 12"
-      ];
       initialize = true;
+      # Live paths: there is no ZFS snapshot mount on this host (see services/restic).
+      inherit (options) paths;
       backupPrepareCommand = ''
-        # remove stale locks - this avoids some occasional annoyance
-        #
-        ${pkgs.restic}/bin/restic unlock --remove-all || true
+        # Clear STALE locks only. Not `--remove-all`, which also strips locks held by
+        # running processes -- on the shared remote repo that lets a prune delete
+        # packs another unit is still writing.
+        ${pkgs.restic}/bin/restic unlock || true
       '';
 
     in
-    {
-      # local backup
-      "${options.app}-local" = {
-        inherit pruneOpts timerConfig initialize backupPrepareCommand;
-        # Move the path to the zfs snapshot path
-        paths = map (x: "${config.mySystem.system.resticBackup.mountPath}/${x}") options.paths;
-        passwordFile = config.sops.secrets."services/restic/password".path;
-        exclude = excludePaths;
-        repository = "${config.mySystem.system.resticBackup.local.location}/${options.appFolder}";
-        # inherit (options) user;
-      };
-
-      # remote backup
+    lib.optionalAttrs rcfg.local.enable
+      {
+        # local backup: one repo per app, single writer, so it prunes itself
+        "${options.app}-local" = {
+          inherit timerConfig initialize backupPrepareCommand paths;
+          pruneOpts = rcfg.keep;
+          passwordFile = config.sops.secrets."services/restic/password".path;
+          exclude = excludePaths;
+          repository = "${rcfg.local.location}/${options.app}";
+        };
+      } // lib.optionalAttrs rcfg.remote.enable {
+      # remote backup: lands on the ONE shared repo from the env file, so no
+      # pruneOpts -- restic-prune-remote (services/restic) prunes it once a night
       "${options.app}-remote" = {
-        inherit pruneOpts timerConfig initialize backupPrepareCommand;
-        # Move the path to the zfs snapshot path
-        paths = map (x: "${config.mySystem.system.resticBackup.mountPath}/${x}") options.paths;
+        inherit timerConfig initialize backupPrepareCommand paths;
         environmentFile = config.sops.secrets."services/restic/env".path;
         passwordFile = config.sops.secrets."services/restic/password".path;
-        repository = "${config.mySystem.system.resticBackup.remote.location}/${options.appFolder}";
+        repository = "${rcfg.remote.location}/${options.app}";
         exclude = excludePaths;
-        # inherit (options) user;
       };
-
     }
   );
 

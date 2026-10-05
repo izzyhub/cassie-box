@@ -46,6 +46,10 @@
   mySystem.purpose = "Cassie Services";
   mySystem.system.impermanence.enable = false;
   mySystem.system.autoUpgrade.enable = true; # bold move cotton
+  # Local restic repos on the NVMe itself, not via the mergerfs pool, so a dead
+  # sda (data1 + root) still leaves the local copies. Offsite: the shared B2 repo
+  # from services/restic/env. See services/restic.
+  mySystem.system.resticBackup.local.location = "/mnt/data2/restic";
   mySystem.dataFolder = "/mnt/data";
   mySystem.services = {
     openssh.enable = true;

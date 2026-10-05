@@ -13,6 +13,11 @@ let
   group = "kah";
   port = 8222;
   appFolder = "/mnt/data/appdata/${app}";
+  # nixpkgs' backup-vaultwarden (sqlite `.backup`, nightly 23:00) writes a consistent
+  # copy of /var/lib/bitwarden_rs here, and restic picks it up at 02:05+. The live
+  # data dir is never read by restic. Not under appFolder: that is 0750 kah and the
+  # backup unit runs as the vaultwarden user.
+  backupFolder = "/mnt/data/appdata/${app}-backup";
   persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
   host = "${app}" + (if cfg.dev then "-dev" else "");
   url = "${host}.${config.networking.domain}";
@@ -74,6 +79,7 @@ in
     services.vaultwarden = {
       enable = true;
       #dataDir = "/var/lib/vaultwarden";
+      backupDir = backupFolder;
       environmentFile = config.sops.secrets."${category}/${app}/env".path;
       #inherit user group;
       config = {
@@ -129,7 +135,7 @@ in
 
     services.restic.backups = mkIf cfg.backup (config.lib.mySystem.mkRestic {
       inherit app user;
-      paths = [ appFolder ];
+      paths = [ backupFolder ];
       inherit appFolder;
     });
   };
