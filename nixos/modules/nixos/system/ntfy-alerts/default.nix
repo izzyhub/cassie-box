@@ -30,6 +30,10 @@ in
       description = "Notify on failed unit %i";
       path = [ pkgs.systemd ];
       serviceConfig.Type = "oneshot";
+      # huci is only reachable over the tailnet; failures during boot fire before
+      # MagicDNS is up, so wait for tailscaled and keep retrying for a few minutes.
+      after = [ "network-online.target" ] ++ optional config.services.tailscale.enable "tailscaled.service";
+      wants = [ "network-online.target" ];
       # huci's ntfy is deny-all: bearer token from the global profile secret (see
       # profiles/global/sops.nix). Soft (-) so hosts without sops still start the unit.
       serviceConfig.EnvironmentFile = "-/run/secrets/services/ntfy/hooks-env";
@@ -41,7 +45,7 @@ in
       # slow boot rather than becoming a failed unit itself.
       scriptArgs = "%i %H";
       script = ''
-        ${pkgs.curl}/bin/curl -m 20 --retry 5 --retry-delay 5 --retry-connrefused \
+        ${pkgs.curl}/bin/curl -m 20 --retry 30 --retry-delay 10 --retry-max-time 300 --retry-connrefused \
           -H "Authorization: Bearer $NTFY_TOKEN" \
           -H "Title: $1 failed on $2" \
           -H "Tags: warning,skull" \

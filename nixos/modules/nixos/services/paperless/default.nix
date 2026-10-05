@@ -89,10 +89,12 @@ in
     # };
 
 
-    # Folder perms - only for containers
-    # systemd.tmpfiles.rules = [
-    # "d ${appFolder}/ 0750 ${user} ${group} -"
-    # ];
+    # The upstream module doesn't create these, and they were left root:media on the
+    # mergerfs pool, so the paperless units failed their writeable-dir system check.
+    systemd.tmpfiles.rules = [
+      "d ${config.services.paperless.mediaDir} 0775 ${user} media -"
+      "d ${config.services.paperless.consumptionDir} 0775 ${user} media -"
+    ];
 
     environment.persistence."${config.mySystem.persistentFolder}" = lib.mkIf config.mySystem.system.impermanence.enable {
       directories = [{ directory = appFolder; inherit user; inherit group; mode = "750"; }
@@ -105,10 +107,10 @@ in
       enable = true;
       dataDir = "/var/lib/paperless";
       mediaDir = "${dataFolder}/documents/paperless/media";
-      consumptionDir = "/${dataFolder}/documents/paperless/inbound";
+      consumptionDir = "${dataFolder}/documents/paperless/inbound";
       consumptionDirIsPublic = true;
       port = 8000;
-      address = "localhost";
+      address = "127.0.0.1";
       passwordFile = config.sops.secrets."${category}/${app}/passwordFile".path;
       settings = {
         PAPERLESS_OCR_LANGUAGE = "eng";

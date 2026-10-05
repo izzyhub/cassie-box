@@ -21,8 +21,6 @@ with lib;
       "d ${config.mySystem.dataFolder}/media/music 0775 root media -"
       "d ${config.mySystem.dataFolder}/documents 0775 root media -"
       "d ${config.mySystem.dataFolder}/documents/paperless 0775 root media -"
-      "d ${config.mySystem.dataFolder}/documents/paperless/media 0775 root media -"
-      "d ${config.mySystem.dataFolder}/documents/paperless/inbound 0775 root media -"
       "d ${config.mySystem.dataFolder}/photos 0775 root media -"
       "d ${config.mySystem.dataFolder}/photos/immich 0775 root media -"
       "d ${config.mySystem.dataFolder}/torrents 0775 root media -"

@@ -115,7 +115,8 @@
     };
     navidrome.enable = true;
     paperless.enable = true;
-    redbot.enable = true;
+    # No Discord TOKEN in its sops env yet; it crash-loops without one.
+    redbot.enable = false;
     silverbullet.enable = true;
     tandoor.enable = true;
     boat-ray = {

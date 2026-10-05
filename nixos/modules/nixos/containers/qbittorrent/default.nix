@@ -52,7 +52,9 @@ in
         ports = [ "${builtins.toString qbit_port}:${builtins.toString qbit_port}" ];
         volumes = [
           "${appFolder}:/config:rw"
-          "${dataFolder}/torrents/:${dataFolder}/downloads/qbittorrent:rw"
+          # Same path inside as out, so the save path qbittorrent reports
+          # (Session\DefaultSavePath) is valid on the host and for qbtools.
+          "${dataFolder}/torrents:${dataFolder}/torrents:rw"
           "${dataFolder}/qbittorrent-cache:/cache"
           "/etc/localtime:/etc/localtime:ro"
         ];

@@ -68,6 +68,13 @@ in
 
     users.users.cassie.extraGroups = [ group ];
     users.users.izzy.extraGroups = [ group ];
+    users.users.${user}.extraGroups = [ "media" ];
+
+    # calibre-web's sandbox bind-mounts the library, so the unit can't start until it
+    # exists. Shared with the calibre container (PUID 568 = kah) via the media group.
+    systemd.tmpfiles.rules = [
+      "d ${config.mySystem.dataFolder}/media/books 2775 kah media -"
+    ];
 
 
     environment.persistence."${config.mySystem.persistentFolder}" = lib.mkIf config.mySystem.system.impermanence.enable {

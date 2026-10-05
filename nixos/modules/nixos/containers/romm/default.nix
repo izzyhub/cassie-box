@@ -20,6 +20,9 @@ let
   host = "${app}" + (if cfg.dev then "-dev" else "");
   url = "${host}.${config.networking.domain}";
   dataFolder = "${config.mySystem.dataFolder}";
+  # MariaDB can't live on the mergerfs pool: FUSE breaks its mmapped tc.log
+  # ("Bad magic header in tc log") and it corrupted itself across reboots.
+  dbFolder = "/var/lib/${app}/db";
 in
 {
   options.mySystem.${category}.${app} = {
@@ -69,13 +72,17 @@ in
       "d ${appFolder}/config 0750 ${user} ${group} -"
       # mariadb chowns its datadir to the in-container mysql user on first
       # start; this rule only has to make the parent exist.
-      "d ${appFolder}/db 0750 ${user} ${group} -"
+      "d /var/lib/${app} 0750 ${user} ${group} -"
+      "d ${dbFolder} 0750 ${user} ${group} -"
       "d ${dataFolder}/roms 0750 ${user} ${group} -"
       "d ${dataFolder}/roms/assets 0750 ${user} ${group} -"
     ];
 
     environment.persistence."${config.mySystem.persistentFolder}" = lib.mkIf config.mySystem.system.impermanence.enable {
-      directories = [{ directory = appFolder; inherit user; inherit group; mode = "750"; }];
+      directories = [
+        { directory = appFolder; inherit user; inherit group; mode = "750"; }
+        { directory = "/var/lib/${app}"; inherit user; inherit group; mode = "750"; }
+      ];
     };
 
     virtualisation.oci-containers.containers = {
@@ -109,7 +116,7 @@ in
           MARIADB_DATABASE = app;
           MARIADB_USER = "${app}-user";
         };
-        volumes = [ "${appFolder}/db:/var/lib/mysql" ];
+        volumes = [ "${dbFolder}:/var/lib/mysql" ];
         extraOptions = [
           "--health-cmd=healthcheck.sh --connect --innodb_initialized"
           "--health-interval=10s"
@@ -157,7 +164,7 @@ in
 
     services.restic.backups = mkIf cfg.backup (config.lib.mySystem.mkRestic {
       inherit app user;
-      paths = [ appFolder ];
+      paths = [ appFolder dbFolder ];
       inherit appFolder;
     });
   };
