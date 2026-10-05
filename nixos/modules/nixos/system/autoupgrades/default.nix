@@ -25,7 +25,12 @@ with lib;
     };
     rebootWindow = lib.mkOption {
       type = lib.types.attrsOf lib.types.str;
-      default = { lower = "04:00"; upper = "05:00"; };
+      # nixpkgs compares HH:MM strictly (`now > lower && now < upper`) and the
+      # hourly timer fires on the hour, so the bounds must not sit on :00. A
+      # 04:00-05:00 window never matched: with allowReboot the upgrade runs
+      # `nixos-rebuild boot` and only activates a new kernel by rebooting, so
+      # kernel-changing upgrades sat unactivated indefinitely. This catches 04:00 and 05:00.
+      default = { lower = "03:30"; upper = "05:30"; };
       description = "Local-time window in which an upgrade may reboot the machine.";
     };
   };
