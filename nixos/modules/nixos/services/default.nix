@@ -21,6 +21,7 @@
     ./node-red
     ./nginx
     ./sso
+    ./kanidm
     ./calibre-web
     ./rss-bridge
     ./paperless

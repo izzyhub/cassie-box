@@ -3,7 +3,7 @@
 > Adapted on 2026-09-28 from the izzy-nix-config plan (`~/izzy-nix-config/docs/security/sso-kanidm.md`,
 > phases 1-5 live there). The modules can be ported from that repo: `services/kanidm`,
 > `services/oauth2-proxy`, `services/sso`, and `mkVhost`/`oidcIssuer` in `lib.nix`.
-> **Nothing in this doc is implemented yet.** Tick the boxes as things land.
+> Tick the boxes as things land.
 
 ## What is different from the source plan
 
@@ -62,24 +62,37 @@ Rules for the conversion:
 ## 3. Build phases
 
 ### Phase 0: prerequisites from the hand-off checklist
-- [x] `mkVhost` ported and 42 modules converted (§2), not yet committed or deployed. The rendered `nginx.conf` is identical except for two expected kinds of change:
+- [x] `mkVhost` ported and 42 modules converted (§2). Committed on `sso-kanidm` (fcdd417), not yet on `main` or deployed. The rendered `nginx.conf` is identical except for two expected kinds of change:
       container vhosts' `resolver 10.88.0.1;` and two `client_max_body_size` lines moved from location to server level (same effect);
       and the unneeded resolver dropped from the loopback vhosts grafana, navidrome, paperless, syncthing, vikunja and redis.
       Also checked with every imported-but-disabled vhost module switched on.
       Still hand-written: vaultwarden, boat-ray, searxng, rss-bridge (nixpkgs owns that vhost), and minio/open-webui/thelounge/audioreadarr (not imported, so the diff can't check them).
 - [ ] Restic backups working (checklist A). Kanidm's `online_backup` directory has to land in a repo that actually exists.
+      Decided 2026-09-28: local repos in `/mnt/data2/restic/<app>` (the NVMe, outside mergerfs), offsite in the shared B2 repo `cassie-box-backup`.
+      The B2 key in `services/restic/env` was replaced and authorizes (checked 2026-10-05).
+      Nix side done: `mkRestic` backs up live paths (the `/mnt/data/nightly_backup` rewrite came from the source's ZFS flow and made every local unit fail with "nothing to backup"),
+      one shared cache, `unlock` without `--remove-all`, remote units don't prune and `restic-prune-remote` (06:00) does it once,
+      `sudo restic-local <app> …` / `sudo restic-remote …` for running restic by hand. Vaultwarden is backed up from nixpkgs' `backupDir` sqlite copy
+      (`/mnt/data/appdata/vaultwarden-backup`, 23:00) instead of an `appFolder` that only held a stray repo.
+      Still manual after deploy: remove the stray restic repo skeletons in `/mnt/data/appdata/*`, then do one restore.
 - [ ] Unit-failure alerting working (checklist A). A dead oauth2-proxy returns 500 on every gated vhost, and someone needs to find out.
+      Decided 2026-09-28: same system as izzy-nix-config, publishing to **huci's ntfy over the tailnet** (`http://huci.tail6b6f7.ts.net:2586`, topic `homelab`). Pushover removed.
+      Nix side done: `system/ntfy-alerts` (`notify-ntfy@` onFailure hook), `services/ntfy-alertmanager` (bridge on 127.0.0.1:8090 → huci),
+      Alertmanager routed to the bridge, vmagent writing to the local VictoriaMetrics instead of `shodan`, a `systemd_unit_failed` rule. Secrets are in `profiles/global/secrets.sops.yaml`.
 - [ ] Autoupgrade flag fixed, and ideally the `stable` ref (checklist B). Otherwise each phase below goes live within the hour of being pushed to `main`.
+      Flag fixed (67f5ef1). Second bug, found 2026-10-05: with `allowReboot` the upgrade runs `nixos-rebuild boot` and only activates a new kernel by rebooting,
+      but nixpkgs checks the window with strict comparisons, and the hourly timer fires at exactly 04:00 and 05:00. A `04:00`-`05:00` window therefore never matched,
+      and generation 95 (`main`, older kernel) was built every hour and never activated. The window is now `03:30`-`05:30`. `stable` ref not done.
 
 ### Phase 1: Kanidm (nix)
-- [ ] Port `services/kanidm/default.nix`, with these changes:
+- [x] Port `services/kanidm/default.nix`, with these changes:
       drop `ldap.*` and `tailnetListen`;
       `environment.persistence` uses `mySystem.persistentFolder` (as the other modules here do);
       its vhost is `mkVhost { app = "kanidm"; subdomain = "idm"; port = 8443; scheme = "https"; websockets = true; }` as in the source;
       `mkRestic` here is `nixos/modules/nixos/lib.nix:40`, so check that its arguments match.
-- [ ] `networking.hosts."127.0.0.1" = [ "idm.cassies.app" "auth.cassies.app" ];`
-- [ ] `services/kanidm/secrets.sops.yaml`: `admin-password` and `idm-admin-password` (`openssl rand -hex 32`).
-- [ ] Add the module to `services/default.nix`, and set `mySystem.services.kanidm.enable = true` in the host.
+- [x] `networking.hosts."127.0.0.1"`: `idm.cassies.app` is set by the kanidm module. `auth.cassies.app` moves to phase 3 and goes in the oauth2-proxy module, because nothing serves it before then.
+- [x] `services/kanidm/secrets.sops.yaml`: `admin-password` and `idm-admin-password` (64 hex characters each, encrypted to all five `.sops.yaml` keys).
+- [x] Add the module to `services/default.nix`, and set `mySystem.services.kanidm.enable = true` in the host.
 - [ ] **Manual**: `nixos-rebuild build --flake .#cassie-box` locally, deploy, then check that `https://idm.cassies.app` loads on the LAN.
 
 ### Phase 2: people and groups

@@ -136,6 +136,11 @@
     # monitoring
     victoriametrics.enable = true;
     ntfy-alertmanager.enable = true;
+
+    # SSO (docs/security/sso-kanidm.md). Phase 1: the IdP only — nothing is gated
+    # and no clients exist yet. https://idm.cassies.app; the name is permanent once
+    # anyone enrols a passkey.
+    kanidm.enable = true;
     grafana.enable = true;
     #cockpit.enable = true;
   };
