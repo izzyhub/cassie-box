@@ -70,10 +70,13 @@ in
       "d ${appFolder}/resources 0750 ${user} ${group} -"
       "d ${appFolder}/redis-data 0750 ${user} ${group} -"
       "d ${appFolder}/config 0750 ${user} ${group} -"
-      # mariadb chowns its datadir to the in-container mysql user on first
-      # start; this rule only has to make the parent exist.
+      # mariadb chowns its datadir to the in-container mysql user (999) on
+      # start. A `d` rule re-applies owner/mode to an existing dir on every
+      # tmpfiles run (e.g. each switch), so it must name 999 too: kah:kah here
+      # locked mariadb out of its datadir mid-run, it couldn't delete tc.log
+      # on shutdown, and the next start died on "Bad magic header in tc log".
       "d /var/lib/${app} 0750 ${user} ${group} -"
-      "d ${dbFolder} 0750 ${user} ${group} -"
+      "d ${dbFolder} 0750 999 999 -"
       "d ${dataFolder}/roms 0750 ${user} ${group} -"
       "d ${dataFolder}/roms/assets 0750 ${user} ${group} -"
     ];
