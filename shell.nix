@@ -16,7 +16,7 @@
 }:
 let
   # setup the ssssnaaake
-  my-python = pkgs.python311;
+  my-python = pkgs.python3;
   python-with-my-packages = my-python.withPackages
     (p: with p; [
       mkdocs-material
