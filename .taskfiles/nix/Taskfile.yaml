@@ -126,6 +126,28 @@ tasks:
       - echo "Building installation ISO..."
       - nix build .#packages.x86_64-linux.iso -o ./result-iso
       - echo "ISO built successfully at $(readlink -f ./result-iso)"
+      - 'echo "Flash it with: task nix:iso-flash device=/dev/sdX"'
+
+  iso-flash:
+    desc: Build (if needed) and dd the installation ISO to a USB device (device=/dev/sdX)
+    silent: true
+    requires:
+      vars:
+        - device
+    cmds:
+      - task: build-iso
+      - echo "About to ERASE {{.device}} and write the installation ISO to it."
+      - lsblk -dpo NAME,SIZE,MODEL,TRAN {{.device}}
+      - task: .prompt_to_continue
+      # find -L resolves the versioned iso name through the result-iso symlink;
+      # command substitution avoids relying on the task shell to glob-expand
+      # the `if=…*.iso` word (it doesn't, so a bare glob reaches dd as a literal).
+      - sudo dd if="$(find -L result-iso/iso -maxdepth 1 -name '*.iso')" of={{.device}} bs=4M conv=fsync status=progress
+      - sync
+      - 'echo "Done. Boot cassie-box from {{.device}} (root password: nixos, sshd is on)."'
+    preconditions:
+      - sh: test -b {{.device}}
+        msg: "{{.device}} is not a block device — check lsblk"
 
   install-anywhere:
     desc: Install cassie-box using nixos-anywhere
