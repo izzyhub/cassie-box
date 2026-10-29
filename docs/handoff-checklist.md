@@ -108,6 +108,13 @@ Items are ordered by how badly they hurt a headless box.
       Dell OptiPlex 7060, BIOS 1.12.0: set *AC Recovery* to *Power On*, disable
       *Deep Sleep*, and confirm the box boots with no keyboard attached and no
       "press F1" prompt.
+- [ ] **Order or print a 2.5" SSD caddy (must be done before boxing it up).**
+      The Crucial BX500 sits loose in the Micro chassis on its plug-in SATA
+      connector with no caddy holding it down. It worked itself loose on
+      2026-10-29 and the BIOS reported "no bootable devices found". Order a
+      Dell OptiPlex Micro 2.5" drive caddy or 3D-print one, fit it, and
+      cold-boot to confirm the drive is detected. Shipping will shake it far
+      more than sitting on a shelf did.
 - [ ] **Homepage widget nits.** Fairfax longitude should be `-77.3053`
       (positive puts it in Uzbekistan); locale `au` and metric units in the US.
 - [ ] **Stale docs.** `docs/internal-setup-guide.md` says dynamic DNS is
