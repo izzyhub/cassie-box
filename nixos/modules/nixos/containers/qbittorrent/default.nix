@@ -41,7 +41,7 @@ in
 
     virtualisation.oci-containers.containers.${app} =
       let
-        image = "ghcr.io/onedr0p/qbittorrent:5.0.3@sha256:3d62f065290ae77a10c7f7deaef7bc857068feff89503773707d2dae339b66c6";
+        image = "ghcr.io/onedr0p/qbittorrent:5.0.3@sha256:0c0310d8266d62debd8c402a3183d646757e9bb982925a7c64be4beea57618f0";
       in
       {
         image = "${image}";
