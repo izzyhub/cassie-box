@@ -103,6 +103,9 @@ in
       "d ${appFolder}/ 0750 ${user} ${group} -"
       "d ${appFolder}/machine-learning 0750 ${user} ${group} -"
       "d ${appFolder}/postgres 0750 acme acme -"
+      # Podman won't create a missing bind-mount source. The postgres entrypoint
+      # chowns this to its own user on first start.
+      "d /var/lib/immich/postgres-v3 0700 root root -"
 
     ];
 
