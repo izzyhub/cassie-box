@@ -96,15 +96,19 @@ Rules for the conversion:
 - [ ] **Manual**: `nixos-rebuild build --flake .#cassie-box` locally, deploy, then check that `https://idm.cassies.app` loads on the LAN.
 
 ### Phase 2: people and groups
-- [ ] `persons.izzy = { groups = [ "admins" "household" ]; ... }` and `persons.cassie = { groups = [ "admins" "household" ]; mailAddresses = [ <Cassie's email> ]; }`.
+- [x] `persons.izzy` (`izzy@izzywatson.com`) and `persons.cassie` (`cassandraraemorgan19@gmail.com`), both in `admins` and `household`, declared in the host config.
       The email matters: romm, paperless and immich match existing accounts by email.
-- [ ] **Manual, izzy**: on the box, `kanidm login --name idm_admin`, then `kanidm person credential create-reset-token izzy`. Set a password and a passkey.
-- [ ] **Manual, Cassie**: `kanidm person credential create-reset-token cassie --ttl 86400` (the TTL is in seconds), then send her the link.
+- [ ] **Manual, izzy**: on the box, `kanidm login --name idm_admin` (password: `sudo cat /run/secrets/services/kanidm/idm-admin-password`),
+      then `kanidm person credential create-reset-token izzy --name idm_admin`. Set a password and a passkey.
+- [ ] **Manual, Cassie**: `kanidm person credential create-reset-token cassie --name idm_admin --ttl 86400` (the TTL is in seconds), then send her the link.
       The link only opens where `idm.cassies.app` resolves: on her LAN once the box is there, or on the tailnet.
       Two ways to do it:
       (a) before shipping, if she can do it from Izzy's network, or
       (b) as a new step in checklist §D, just after step 3 (Vaultwarden). Store the Kanidm password in Vaultwarden. A passkey on her phone is better.
-      Either way, write the fallback in checklist §C: reset tokens can be reissued remotely at any time, so a lost credential is a phone call, not a trip.
+      Decided 2026-11-03: Izzy is sending her a **YubiKey** for the first enrolment. Kanidm requires user verification for passkeys,
+      so the key needs a FIDO2 PIN (`ykman fido access change-pin`) before it's registered. A single hardware key is a single point of failure,
+      so she also sets a password (kept in Vaultwarden) or a phone passkey from the same reset session.
+      Either way, write the fallback in checklist §C: reset tokens can be reissued remotely at any time, so a lost credential is a phone call, not a trip. (Done: §C.)
 
 ### Phase 3: forward-auth responder
 - [ ] Port `services/oauth2-proxy`: drop `tailnetListen` and `trustedProxyIP` beyond loopback. Keep the restart settings: `Restart=always`, `RestartSec=5s`, no start limit.

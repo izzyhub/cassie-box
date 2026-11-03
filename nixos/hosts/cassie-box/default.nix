@@ -148,10 +148,34 @@
       victoriametrics.enable = true;
       ntfy-alertmanager.enable = true;
 
-      # SSO (docs/security/sso-kanidm.md). Phase 1: the IdP only — nothing is gated
-      # and no clients exist yet. https://idm.cassies.app; the name is permanent once
-      # anyone enrols a passkey.
-      kanidm.enable = true;
+      # SSO (docs/security/sso-kanidm.md). https://idm.cassies.app; the name is
+      # permanent once anyone enrols a passkey.
+      kanidm = {
+        enable = true;
+        # admins: infrastructure (code-server, metrics, *arr settings).
+        # household: everyone allowed through the SSO portal.
+        # Both people are in both; the split matters once guests get logins.
+        groups = {
+          admins = { };
+          household = { };
+        };
+        # Credentials (password, passkey) are never declared here: each person
+        # enrols their own from a reset link (`kanidm person credential
+        # create-reset-token <name> --name idm_admin`). The emails are what romm,
+        # paperless and immich match existing accounts on.
+        persons = {
+          izzy = {
+            displayName = "Izzy";
+            mailAddresses = [ "izzy@izzywatson.com" ];
+            groups = [ "admins" "household" ];
+          };
+          cassie = {
+            displayName = "Cassie";
+            mailAddresses = [ "cassandraraemorgan19@gmail.com" ];
+            groups = [ "admins" "household" ];
+          };
+        };
+      };
       grafana.enable = true;
       #cockpit.enable = true;
     };

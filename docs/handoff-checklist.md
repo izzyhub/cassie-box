@@ -148,6 +148,14 @@ Keep in Izzy's own vault; give Cassie a sealed card with the starred lines.
       Navidrome, Romm, Overseerr, Sonarr/Radarr/Lidarr/Readarr/Prowlarr,
       SABnzbd, qBittorrent x2. Put all of these into Vaultwarden itself and
       the card only needs the Vaultwarden password.
+- [ ] * Kanidm (`https://idm.cassies.app`): the one login for every app behind SSO.
+      Cassie's password goes in Vaultwarden; her passkey lives on her phone.
+      **A lost Kanidm credential is a phone call, not a trip:** Izzy reissues a
+      reset link over SSH at any time:
+      `kanidm login --name idm_admin` (password: `sudo cat /run/secrets/services/kanidm/idm-admin-password`),
+      then `kanidm person credential create-reset-token cassie --name idm_admin --ttl 86400`
+      and send her the link. The `admin`/`idm_admin` passwords are in
+      `services/kanidm/secrets.sops.yaml` and are reset from it on every deploy.
 - [ ] Plex: which account claims the server, and whether Cassie is a managed
       user or home member.
 - [ ] Redbot Discord token owner. Boat-ray peer (`sophie-001-1`) owner.
