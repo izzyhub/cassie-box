@@ -173,7 +173,7 @@ in
       config.lib.mySystem.mkVhost { inherit app port; host = url; }
       // config.lib.mySystem.mkVhost { app = "alertmanager"; host = urlAM; port = portAM; }
       // config.lib.mySystem.mkVhost { app = "vmalert"; host = urlVAM; port = portVAM; websockets = true; }
-      ;
+    ;
 
 
 

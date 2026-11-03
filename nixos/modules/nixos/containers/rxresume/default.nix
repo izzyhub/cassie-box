@@ -59,33 +59,33 @@ in
     };
 
   config = mkIf cfg.enable {
-      ## Secrets
-      sops.secrets."${category}/${app}/env" = {
-        sopsFile = ./secrets.sops.yaml;
-        owner = user;
-        inherit group;
-        restartUnits = [ "${app}.service" ];
+    ## Secrets
+    sops.secrets."${category}/${app}/env" = {
+      sopsFile = ./secrets.sops.yaml;
+      owner = user;
+      inherit group;
+      restartUnits = [ "${app}.service" ];
+    };
+
+    # enable browserless container on this system
+    mySystem.services.browserless-chrome.enable = true;
+
+    users.users.izzy.extraGroups = [ (builtins.toString config.users.groups.rxresume.gid) ];
+    users.users.cassie.extraGroups = [ (builtins.toString config.users.groups.rxresume.gid) ];
+
+    users.users = {
+      rxresume = {
+        group = "rxresume";
+        home = "/var/lib/rxresume/";
+        uid = 319;
       };
+    };
 
-      # enable browserless container on this system
-      mySystem.services.browserless-chrome.enable = true;
+    users.groups = {
+      rxresume.gid = 319;
+    };
 
-      users.users.izzy.extraGroups = [ (builtins.toString config.users.groups.rxresume.gid) ];
-      users.users.cassie.extraGroups = [ (builtins.toString config.users.groups.rxresume.gid) ];
-
-      users.users = {
-        rxresume = {
-          group = "rxresume";
-          home = "/var/lib/rxresume/";
-          uid = 319;
-        };
-      };
-
-      users.groups = {
-        rxresume.gid = 319;
-      };
-
-      virtualisation.oci-containers.containers = config.lib.mySystem.mkContainer {
+    virtualisation.oci-containers.containers = config.lib.mySystem.mkContainer {
       inherit app image;
       user = "0"; # :(
       group = "0"; # :(
@@ -112,7 +112,7 @@ in
       dependsOn = [ "browserless-chrome" ];
     };
 
-    systemd.services.podman-rxresume={
+    systemd.services.podman-rxresume = {
       after = [ "postgresql.service" ];
       requires = [ "postgresql.service" ];
     };

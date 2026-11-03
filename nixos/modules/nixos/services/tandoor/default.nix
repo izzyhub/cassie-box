@@ -83,7 +83,7 @@ in
 
     ## service
     services.tandoor-recipes = {
-      enable=true;
+      enable = true;
       extraConfig = {
         GUNICORN_MEDIA = "0";
         # GHSA-g8w3-p77x-mmxh: with MEDIA_ROOT == the state dir, the nginx

@@ -6,7 +6,7 @@ with lib;
 {
   config = {
     # Create media group for data access
-    users.groups.media = {};
+    users.groups.media = { };
     users.users.izzy.extraGroups = [ "media" ];
     users.users.cassie.extraGroups = [ "media" ];
 

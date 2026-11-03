@@ -12,7 +12,7 @@ let
   # image = "";
   user = "vikunja"; #string
   group = "vikunja"; #string
-  inherit (config.services.vikunja) port; #int
+  inherit (config.services.vikunja) port;#int
   appFolder = "/var/lib/private/${app}";
   persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
   host = "${app}" + (if cfg.dev then "-dev" else "");
@@ -91,12 +91,12 @@ in
       frontendHostname = url;
       frontendScheme = "https";
       # TODO add JWT secret
-      environmentFiles=[ config.sops.secrets."${category}/${app}/env".path ]; # TODO jwt and mailer
+      environmentFiles = [ config.sops.secrets."${category}/${app}/env".path ]; # TODO jwt and mailer
       settings = {
         service = {
           # publicurl is derived upstream from frontendScheme/frontendHostname.
-          enablecaldav=true;
-          timezone="America/New_York";
+          enablecaldav = true;
+          timezone = "America/New_York";
         };
         mailer = {
           enabled = true;

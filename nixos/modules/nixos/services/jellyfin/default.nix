@@ -50,7 +50,7 @@ in
           description = "Enable backups";
           default = true;
         };
-   };
+    };
 
   config = mkIf cfg.enable {
     #sops.secrets."${category}/${app}/env" = {

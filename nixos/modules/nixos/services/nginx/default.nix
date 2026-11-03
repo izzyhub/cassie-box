@@ -15,18 +15,20 @@ let
   };
 
   # Generate virtual hosts for enabled services (as defaults - can be overridden)
-  autoVirtualHosts = mapAttrs' (serviceName: serviceConfig: {
-    name = "${serviceName}.${config.networking.domain}";
-    value = mkDefault {
-      forceSSL = true;
-      useACMEHost = config.networking.domain;
-      locations."^~ /" = mkDefault {
-        proxyPass = "http://${serviceConfig.host}:${toString serviceConfig.port}";
-        proxyWebsockets = true;
-        extraConfig = mkIf (serviceConfig.host != "127.0.0.1") "resolver 10.88.0.1;";
+  autoVirtualHosts = mapAttrs'
+    (serviceName: serviceConfig: {
+      name = "${serviceName}.${config.networking.domain}";
+      value = mkDefault {
+        forceSSL = true;
+        useACMEHost = config.networking.domain;
+        locations."^~ /" = mkDefault {
+          proxyPass = "http://${serviceConfig.host}:${toString serviceConfig.port}";
+          proxyWebsockets = true;
+          extraConfig = mkIf (serviceConfig.host != "127.0.0.1") "resolver 10.88.0.1;";
+        };
       };
-    };
-  }) (filterAttrs (name: _: config.mySystem.services.${name}.enable or false) serviceMap);
+    })
+    (filterAttrs (name: _: config.mySystem.services.${name}.enable or false) serviceMap);
 in
 {
   options.mySystem.services.nginx.enable = mkEnableOption "nginx";

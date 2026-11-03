@@ -43,7 +43,7 @@ in
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIG+GiS2pV72FCdFch2ivuqPTea29JDbOTIOmazF9tn8F izzy@nixpad"
     ]; # TODO do i move to ingest github creds?
 
-     packages = [ pkgs.home-manager ];
+    packages = [ pkgs.home-manager ];
   };
   users.users.cassie = {
     isNormalUser = true;

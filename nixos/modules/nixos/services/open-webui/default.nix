@@ -84,9 +84,9 @@ in
 
 
     ## service
-    services.open-webui= {
+    services.open-webui = {
       enable = true;
-      package=pkgs.unstable.open-webui;
+      package = pkgs.unstable.open-webui;
       # openFirewall=true;
       inherit port;
       environment = {
@@ -118,11 +118,11 @@ in
         AUTOCOMPLETE_GENERATION_INPUT_MAX_LENGTH = "-1";
 
         ENABLE_RAG_WEB_SEARCH = "True";
-        CONTENT_EXTRACTION_ENGINE="tika";
-        RAG_WEB_SEARCH_ENGINE="searxng";
+        CONTENT_EXTRACTION_ENGINE = "tika";
+        RAG_WEB_SEARCH_ENGINE = "searxng";
 
         ENABLE_SEARCH_QUERY_GENERATION = "True";
-        SEARXNG_QUERY_URL="https://searxng.${config.networking.domain}/search";
+        SEARXNG_QUERY_URL = "https://searxng.${config.networking.domain}/search";
 
         ENABLE_TAGS_GENERATION = "True";
 
@@ -141,7 +141,7 @@ in
 
         ENABLE_OLLAMA_API = "True";
         ENABLE_OPENAI_API = "True";
-        TIKA_SERVER_URL="http://127.0.0.1:33001";
+        TIKA_SERVER_URL = "http://127.0.0.1:33001";
 
       };
       environmentFile = config.sops.secrets."${category}/${app}/env".path;

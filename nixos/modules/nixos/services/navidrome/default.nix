@@ -10,8 +10,8 @@ let
   category = "services";
   description = "Music streaming";
   # image = "";
-  inherit (config.services.navidrome) user; #string
-  inherit (config.services.navidrome) group; #string
+  inherit (config.services.navidrome) user;#string
+  inherit (config.services.navidrome) group;#string
   port = config.services.navidrome.settings.Port; #int
   appFolder = "/mnt/data/appdata/${app}";
   persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
@@ -84,19 +84,19 @@ in
 
     ## service
     services.navidrome = {
-        enable = true;
-        settings = {
-          Address = "0.0.0.0";
-          Port = 4533;
-          MusicFolder = "${config.mySystem.dataFolder}/media/music";
-          CovertArtPriority = "*.jpg, *.JPG, *.png, *.PNG, embedded";
-          AutoImportPlaylists = false;
-          EnableSharing = true;
-          # "LastFM.Enabled" = true;
-          # "LastFM.ApiKey" = config.sops.secrets.last-fm-key.path;
-          # "LastFM.Secret" = config.sops.secrets.last-fm-secret.path;
-        };
+      enable = true;
+      settings = {
+        Address = "0.0.0.0";
+        Port = 4533;
+        MusicFolder = "${config.mySystem.dataFolder}/media/music";
+        CovertArtPriority = "*.jpg, *.JPG, *.png, *.PNG, embedded";
+        AutoImportPlaylists = false;
+        EnableSharing = true;
+        # "LastFM.Enabled" = true;
+        # "LastFM.ApiKey" = config.sops.secrets.last-fm-key.path;
+        # "LastFM.Secret" = config.sops.secrets.last-fm-secret.path;
       };
+    };
 
 
     # homepage integration

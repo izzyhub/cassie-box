@@ -76,7 +76,7 @@ in
       interval = cfg.interval;
       protocol = "cloudflare";
       zone = cfg.zone;
-      username = "token";  # Literal "token" for API token auth
+      username = "token"; # Literal "token" for API token auth
       passwordFile = config.sops.secrets."${category}/${app}/token".path;
       domains = cfg.records;
       # Legacy `use` rather than `usev4` on purpose: setting usev4 would let the

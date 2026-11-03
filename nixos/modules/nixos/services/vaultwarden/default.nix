@@ -85,7 +85,7 @@ in
       config = {
         domain = "https://${url}";
         rocketPort = port;
-        rocketAddress = "0.0.0.0";  # Listen on all interfaces
+        rocketAddress = "0.0.0.0"; # Listen on all interfaces
       };
     };
 

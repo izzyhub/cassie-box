@@ -64,13 +64,14 @@ let
       body = removeSuffix "/udp" (removeSuffix "/tcp" entry);
       parts = splitString ":" body;
       # "ip:host:container" | "host:container" | "container"
-      hostPart = if length parts == 3 then elemAt parts 1
-      else if length parts == 2 then head parts
-      else null;
+      hostPart =
+        if length parts == 3 then elemAt parts 1
+        else if length parts == 2 then head parts
+        else null;
       address = if length parts == 3 then head parts else "0.0.0.0";
     in
     # A bare "container" publish gets an ephemeral host port, and ranges
-    # ("8000-8010") aren't modelled - skip both rather than guess.
+      # ("8000-8010") aren't modelled - skip both rather than guess.
     if hostPart == null || !(all (c: elem c (stringToCharacters "0123456789")) (stringToCharacters hostPart))
     then null
     else {

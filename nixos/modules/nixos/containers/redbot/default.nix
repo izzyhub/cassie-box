@@ -93,8 +93,8 @@ in
     virtualisation.oci-containers.containers."${app}" = {
       inherit image;
       environment = {
-        PREFIX="?";
-        NICENESS="-15";
+        PREFIX = "?";
+        NICENESS = "-15";
       };
       environmentFiles = [
         config.sops.secrets."${category}/${app}/env".path
