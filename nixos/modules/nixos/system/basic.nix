@@ -14,8 +14,12 @@ with lib;
 
     # System-wide tmpfiles rules
     systemd.tmpfiles.rules = [
-      # Fix /var/lib/private permissions for systemd DynamicUser services
-      "Z /var/lib/private 0700 root root -"
+      # Ensure /var/lib/private itself is 0700 root, as systemd DynamicUser expects.
+      # Must stay non-recursive (`d`, not `Z`): a recursive chown to root runs on
+      # every config switch and takes the state files away from running
+      # DynamicUser services (vikunja crashed with "permission denied" after each
+      # hourly auto-upgrade).
+      "d /var/lib/private 0700 root root -"
     ] ++ (optionals (config.mySystem.dataFolder != null) [
       # Create common data directories with media group ownership
       "d ${config.mySystem.dataFolder} 0775 root media -"
