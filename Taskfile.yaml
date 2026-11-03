@@ -38,9 +38,9 @@ tasks:
       - task: pc-run
 
   format:
-    desc: Check project files
+    desc: Format the tracked nix files (nixpkgs-fmt via `nix fmt`)
     cmds:
-      - nixpkgs-fmt {{.ROOT_DIR}}
+      - nix fmt
 
   nix-eval:
     desc: Evaluate all nix files without building

@@ -1,37 +1,30 @@
 #!/usr/bin/env bash
+# Deploy the local flake to every host in nixosConfigurations, except those in
+# `skip`. Same -r and DEPLOY_DOMAIN behaviour as update-single-machine.sh.
+set -euo pipefail
 
-set -e
-
-hosts=($(echo $(nix eval .#nixosConfigurations --apply 'pkgs: builtins.concatStringsSep " " (builtins.attrNames pkgs)') | xargs))
 skip=(
-    "citadel"
-    "rickenbacker"
+    # nixos-anywhere install target, not a running machine.
+    "cassie-box-installer"
 )
 
-reboot=0
-
+args=()
 while getopts ":r" option; do
     case $option in
-    r)
-        reboot=1
+    r) args+=(-r) ;;
+    *)
+        echo "usage: $0 [-r]" >&2
+        exit 2
         ;;
     esac
 done
 
+mapfile -t hosts < <(nix eval --raw .#nixosConfigurations --apply 'c: builtins.concatStringsSep "\n" (builtins.attrNames c)')
+
 for host in "${hosts[@]}"; do
-    # Check if the host is in the skip list
-    if [[ " ${skip[*]} " =~ " ${host} " ]]; then
+    if [[ " ${skip[*]} " == *" $host "* ]]; then
         continue
     fi
-    fqdn="$host.l.voltaicforge.com"
-    if [ $reboot -eq 0 ]; then
-        echo $fqdn
-        nixos-rebuild switch -j auto --use-remote-sudo --target-host $fqdn --flake ".#$host"
-    else
-        echo "$fqdn with reboot"
-        nixos-rebuild boot -j auto --use-remote-sudo --target-host $fqdn --flake ".#$host"
-        ssh -i $rsa_key $fqdn 'sudo reboot'
-    fi
-    echo
+    "$(dirname "$0")/update-single-machine.sh" "${args[@]}" "$host"
     echo
 done

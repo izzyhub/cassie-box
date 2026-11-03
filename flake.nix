@@ -79,8 +79,22 @@
     in
     rec {
 
-      # Use nixpkgs-fmt for 'nix fmt'
-      #formatter = forAllSystems (system: nixpkgs.legacyPackages."${system}".nixpkgs-fmt);
+      # `nix fmt`: nixpkgs-fmt over the git-tracked .nix files. A bare `nix fmt` or
+      # `nix fmt -- .` (what nix-lint.yaml runs) would otherwise walk into examples/,
+      # which is gitignored vendored code. Explicit paths are passed straight through.
+      formatter = forAllSystems (system:
+        let pkgs = nixpkgs.legacyPackages.${system}; in
+        pkgs.writeShellApplication {
+          name = "fmt";
+          runtimeInputs = [ pkgs.nixpkgs-fmt pkgs.git ];
+          text = ''
+            if [ "$#" -eq 0 ] || [ "$*" = "." ]; then
+              git ls-files -z '*.nix' | xargs -0 nixpkgs-fmt
+            else
+              nixpkgs-fmt "$@"
+            fi
+          '';
+        });
 
       # extend lib with custom functions
       lib = nixpkgs.lib.extend (
@@ -102,27 +116,27 @@
             , system ? "x86_64-linux"
             , nixpkgs ? inputs.nixpkgs
             , hardwareModules ? [ ]
-            # basemodules is the base of the entire machine building
-            # here we import all the modules and setup home-manager
+              # basemodules is the base of the entire machine building
+              # here we import all the modules and setup home-manager
             , baseModules ? [
-              disko.nixosModules.disko
-              sops-nix.nixosModules.sops
-              home-manager.nixosModules.home-manager
-              ./nixos/profiles/global.nix # all machines get a global profile
-              ./nixos/modules/nixos # all machines get nixos modules
-              ./nixos/hosts/${hostname}   # load this host's config folder for machine-specific config
-              {
-                home-manager = {
-                  useUserPackages = true;
-                  useGlobalPkgs = true;
-                  extraSpecialArgs = {
-                    inherit inputs hostname system;
+                disko.nixosModules.disko
+                sops-nix.nixosModules.sops
+                home-manager.nixosModules.home-manager
+                ./nixos/profiles/global.nix # all machines get a global profile
+                ./nixos/modules/nixos # all machines get nixos modules
+                ./nixos/hosts/${hostname}   # load this host's config folder for machine-specific config
+                {
+                  home-manager = {
+                    useUserPackages = true;
+                    useGlobalPkgs = true;
+                    extraSpecialArgs = {
+                      inherit inputs hostname system;
+                    };
+                    # Enable automatic backups for Home Manager
+                    backupFileExtension = "backup";
                   };
-                  # Enable automatic backups for Home Manager
-                  backupFileExtension = "backup";
-                };
-              }
-            ]
+                }
+              ]
             , profileModules ? [ ]
             }:
             nixpkgs.lib.nixosSystem {
@@ -154,42 +168,42 @@
               };
 
             };
-      in
-      rec {
-        "cassie-box" = mkNixosConfig {
-          hostname = "cassie-box";
-          system = "x86_64-linux";
-          hardwareModules = [
-            ./nixos/profiles/hw-generic-x86.nix
-          ];
-          profileModules = [
+        in
+        rec {
+          "cassie-box" = mkNixosConfig {
+            hostname = "cassie-box";
+            system = "x86_64-linux";
+            hardwareModules = [
+              ./nixos/profiles/hw-generic-x86.nix
+            ];
+            profileModules = [
               ./nixos/profiles/role-server.nix
               {
                 home-manager.users.izzy = ./nixos/home/izzy/server.nix;
                 home-manager.users.cassie = ./nixos/home/cassie/server.nix;
               }
-          ];
-        };
+            ];
+          };
 
-        # Installation configuration for nixos-anywhere
-        "cassie-box-installer" = mkNixosConfig {
-          hostname = "cassie-box";
-          system = "x86_64-linux";
-          hardwareModules = [
-            ./nixos/profiles/hw-generic-x86.nix
-          ];
-          profileModules = [
-            ./nixos/profiles/installer.nix
-            ./nixos/hosts/cassie-box/disko.nix
-          ];
-          baseModules = [
-            disko.nixosModules.disko
-            sops-nix.nixosModules.sops
-            ./nixos/profiles/global.nix
-            ./nixos/modules/nixos
-          ];
+          # Installation configuration for nixos-anywhere
+          "cassie-box-installer" = mkNixosConfig {
+            hostname = "cassie-box";
+            system = "x86_64-linux";
+            hardwareModules = [
+              ./nixos/profiles/hw-generic-x86.nix
+            ];
+            profileModules = [
+              ./nixos/profiles/installer.nix
+              ./nixos/hosts/cassie-box/disko.nix
+            ];
+            baseModules = [
+              disko.nixosModules.disko
+              sops-nix.nixosModules.sops
+              ./nixos/profiles/global.nix
+              ./nixos/modules/nixos
+            ];
+          };
         };
-      };
 
       # Dev shell - defined in shell.nix (Python, pre-commit, sops, task, etc.)
       # so `nix develop` and `nix-shell` give the same environment.
@@ -236,6 +250,6 @@
             (builtins.attrNames inputs.self.nixosConfigurations)
             (attr: inputs.self.nixosConfigurations.${attr}.config.system.build.toplevel);
         in
-          nixtop;
+        nixtop;
     };
 }
