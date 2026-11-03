@@ -68,7 +68,7 @@ Rules for the conversion:
       Also checked with every imported-but-disabled vhost module switched on.
       Still hand-written: vaultwarden, boat-ray, searxng, rss-bridge (nixpkgs owns that vhost), and minio/open-webui/thelounge/audioreadarr (not imported, so the diff can't check them).
 - [ ] Restic backups working (checklist A). Kanidm's `online_backup` directory has to land in a repo that actually exists.
-      Decided 2026-09-28: local repos in `/mnt/data2/restic/<app>` (the NVMe, outside mergerfs), offsite in the shared B2 repo `cassie-box-backup`.
+      Decided 2026-09-28: local repos in `/mnt/data2/restic/<app>` (the NVMe, outside mergerfs), offsite in the shared B2 repo `cassie-box-backups`.
       The B2 key in `services/restic/env` was replaced and authorizes (checked 2026-10-05).
       Nix side done: `mkRestic` backs up live paths (the `/mnt/data/nightly_backup` rewrite came from the source's ZFS flow and made every local unit fail with "nothing to backup"),
       one shared cache, `unlock` without `--remove-all`, remote units don't prune and `restic-prune-remote` (06:00) does it once,
