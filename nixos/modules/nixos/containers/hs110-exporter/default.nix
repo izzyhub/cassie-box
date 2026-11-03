@@ -9,7 +9,7 @@ let
   app = "hs110-exporter";
   category = "services";
   description = "Prometheus exporter for hs110 smartplugs";
-  image = "sdelrio/hs110-exporter:v1.0.0";
+  image = "sdelrio/hs110-exporter:v1.0.0@sha256:bdbf8583ebedf58728fc00f4ef3c547e8b13c83c7bb82c5b174d902d4b011cfc";
   user = "kah"; #string
   group = "kah"; #string
   port = 8110; #int

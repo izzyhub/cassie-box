@@ -90,7 +90,7 @@ in
 
     virtualisation.oci-containers.containers = {
       "${app}" = {
-        image = "rommapp/romm:5.2.0";
+        image = "rommapp/romm:5.2.0@sha256:3512f2ca455782f90247271bed23116e6bc675bc74e379be2c41696e607ab11e";
         environmentFiles = [ config.sops.secrets."${category}/${app}/env".path ];
         environment = {
           DB_HOST = "${app}-db";
@@ -113,7 +113,7 @@ in
       };
 
       "${app}-db" = {
-        image = "mariadb:11.4";
+        image = "mariadb:11.4@sha256:d1891ede5a559f1086f55053bb8cc1569b0298338c4d72d71725a7f74f6ba620";
         environmentFiles = [ config.sops.secrets."${category}/${app}/env".path ];
         environment = {
           MARIADB_DATABASE = app;
