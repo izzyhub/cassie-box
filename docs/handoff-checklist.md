@@ -95,6 +95,16 @@ Items are ordered by how badly they hurt a headless box.
       local `nixos-rebuild build --flake .#cassie-box`. Note the first upgrade
       after the flag fix builds ~1560 derivations (R packages, boat-ray) on the
       box: hours of full CPU. Consider pushing to a cache first.
+- [ ] **Decide on Renovate automerge.** `renovate.json5` automerges digest-only
+      container bumps (same tag, rebuilt image) between 6am and 10pm, once
+      `build-hosts.yaml` builds cassie-box. Gitea's push mirror then sends the
+      merge to GitHub, and the hourly auto-upgrade deploys it: an automerged PR
+      is live on Cassie's box within about an hour, with nobody looking. Left
+      on for now (2026-11-02). Before shipping, either turn `automerge` off in
+      the "Digest-only bumps" rule, or move auto-upgrade to a `stable` ref (item
+      above) so a merge to `main` no longer deploys. Also note the push mirror
+      is now part of the deploy path: if it breaks, the box silently stops
+      updating.
 - [ ] **Firewall.** 8428 (VictoriaMetrics, no auth) and 8081 are open to the
       LAN. Close unless needed.
 - [ ] **DNS rebind protection.** `*.cassies.app` resolves to a private

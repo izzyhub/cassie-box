@@ -1,0 +1,32 @@
+---
+name: Check Flakes
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+    paths:
+      - "**.nix"
+      - "flake.lock"
+  push:
+    paths:
+      - "**.nix"
+      - "flake.lock"
+
+# Authenticated github.com fetches: nix resolves every `github:` flake input
+# through api.github.com, capped at 60 req/hr per IP when unauthenticated.
+# The token is a zero-scope PAT (public read only), set as a Gitea Actions
+# secret; nothing on the host uses it. Guarded: if the secret is
+# unset, a bare `github.com=` makes nix send an empty token, which GitHub
+# rejects with 401 Bad credentials instead of falling back to anonymous.
+env:
+  NIX_CONFIG: ${{ secrets.NIX_GITHUB_TOKEN && format('access-tokens = github.com={0}', secrets.NIX_GITHUB_TOKEN) || '' }}
+
+jobs:
+  check_flakes:
+    runs-on: nix
+    steps:
+      - uses: https://github.com/actions/checkout@v7
+      - run: nix flake check

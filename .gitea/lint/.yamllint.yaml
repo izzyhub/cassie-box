@@ -1,8 +1,13 @@
 ---
+# Used by the yamllint pre-commit hook (`task check`). Based on upstream's
+# .github/lint/.yamllint.yaml; examples/ is vendored upstream code and not ours to lint.
 ignore: |
   .direnv/
   .private/
   .vscode/
+  examples/
+  result
+  result-*
   **/*.sops.yaml
 
 extends: default

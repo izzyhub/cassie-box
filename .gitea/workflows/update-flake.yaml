@@ -1,0 +1,67 @@
+---
+name: Update flake.lock
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * *"
+
+# Authenticated github.com fetches: nix resolves every `github:` flake input
+# through api.github.com, capped at 60 req/hr per IP when unauthenticated.
+# The token is a zero-scope PAT (public read only), set as a Gitea Actions
+# secret; nothing on the host uses it. Guarded: if the secret is
+# unset, a bare `github.com=` makes nix send an empty token, which GitHub
+# rejects with 401 Bad credentials instead of falling back to anonymous.
+env:
+  NIX_CONFIG: ${{ secrets.NIX_GITHUB_TOKEN && format('access-tokens = github.com={0}', secrets.NIX_GITHUB_TOKEN) || '' }}
+
+jobs:
+  lockfile:
+    runs-on: nix
+    steps:
+      - uses: https://github.com/actions/checkout@v7
+
+      - name: Update flake.lock
+        run: nix flake update
+
+      - name: Create pull request
+        env:
+          GITEA_TOKEN: ${{ secrets.GITEA_TOKEN }}
+        run: |
+          git config user.name "Gitea Actions"
+          git config user.email "actions@gitea.izzys.place"
+
+          if git diff --quiet flake.lock; then
+            echo "No changes to flake.lock"
+            exit 0
+          fi
+
+          BRANCH="auto/update-flake-lock"
+          git checkout -b "$BRANCH"
+          git add flake.lock
+          git commit -m "Update flake.lock"
+          # Authenticate the push explicitly rather than through the credentials
+          # actions/checkout leaves behind: since v6 those only load via an
+          # includeIf gitdir rule that silently stops matching if the workspace
+          # path goes through a symlink, and the push then hangs on a prompt.
+          GIT_TERMINAL_PROMPT=0 git \
+            -c http.extraHeader="Authorization: token $GITEA_TOKEN" \
+            push -f origin "$BRANCH"
+
+          # Create PR via Gitea API
+          EXISTING=$(curl -s -H "Authorization: token $GITEA_TOKEN" \
+            "$GITHUB_SERVER_URL/api/v1/repos/$GITHUB_REPOSITORY/pulls?state=open&head=$BRANCH" \
+            | jq length)
+
+          if [ "$EXISTING" = "0" ]; then
+            curl -s -X POST \
+              -H "Authorization: token $GITEA_TOKEN" \
+              -H "Content-Type: application/json" \
+              "$GITHUB_SERVER_URL/api/v1/repos/$GITHUB_REPOSITORY/pulls" \
+              -d "{
+                \"title\": \"Update flake.lock\",
+                \"head\": \"$BRANCH\",
+                \"base\": \"main\",
+                \"labels\": []
+              }"
+          fi

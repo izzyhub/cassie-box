@@ -1,0 +1,104 @@
+---
+# Renovate: PRs for what `nix flake update` doesn't cover — container image tags/digests
+# in the modules and the annotated versions under nixos/pkgs/. Policy lives in
+# renovate.json5; this file is only the self-hosted wiring.
+#
+# Runs on the native `nix` runner rather than in renovate's container image, for two
+# reasons: the nixos/pkgs postUpgradeTask needs nix to recompute hashes, and renovate
+# itself comes from this flake's locked nixpkgs, so update-flake.yaml keeps it current.
+#
+# Secrets:
+#   RENOVATE_TOKEN    required. Gitea PAT for the bot account: repository + issue
+#                     read/write, user + package + organization read. Also used to read
+#                     this Gitea's container registry, if a module ever pulls from it.
+#   NIX_GITHUB_TOKEN  optional, the same zero-scope PAT the other workflows use. Renovate
+#                     uses it for github release lookups + changelogs (60 req/hr without).
+#   DOCKERHUB_USERNAME / DOCKERHUB_TOKEN
+#                     optional. Anonymous Docker Hub tag lookups are rate-limited.
+name: Renovate
+
+on:
+  workflow_dispatch:
+  schedule:
+    # UTC. Automerge is further limited by automergeSchedule in renovate.json5.
+    - cron: "17 */6 * * *"
+
+env:
+  NIX_CONFIG: ${{ secrets.NIX_GITHUB_TOKEN && format('access-tokens = github.com={0}', secrets.NIX_GITHUB_TOKEN) || '' }}
+
+jobs:
+  renovate:
+    runs-on: nix
+    # A normal run takes about a minute. Without this, a hang sits on the runner until
+    # gitea's 3h job timeout.
+    timeout-minutes: 30
+    steps:
+      # Only for `--inputs-from .`; Renovate does its own clone of the repo.
+      - uses: https://github.com/actions/checkout@v7
+
+      - name: Run Renovate
+        env:
+          RENOVATE_TOKEN: ${{ secrets.RENOVATE_TOKEN }}
+          RENOVATE_GITHUB_COM_TOKEN: ${{ secrets.NIX_GITHUB_TOKEN }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          if [ -z "$RENOVATE_TOKEN" ]; then
+            echo "::error::RENOVATE_TOKEN is not set"
+            exit 1
+          fi
+          # An empty value makes renovate send an empty token instead of none.
+          [ -n "$RENOVATE_GITHUB_COM_TOKEN" ] || unset RENOVATE_GITHUB_COM_TOKEN
+
+          export RENOVATE_PLATFORM=gitea
+          export RENOVATE_ENDPOINT="$GITHUB_SERVER_URL/api/v1"
+          export RENOVATE_REPOSITORIES="$GITHUB_REPOSITORY"
+          export RENOVATE_ONBOARDING=false
+          export RENOVATE_REQUIRE_CONFIG=required
+          # NOT $RUNNER_TEMP: that lives in the runner's DynamicUser StateDirectory, which
+          # systemd mounts noexec, so the postUpgradeTask script in renovate's clone fails
+          # with `spawn … EACCES`. /tmp is the unit's own PrivateTmp, and it allows exec.
+          export RENOVATE_BASE_DIR=/tmp/renovate
+          # The one command renovate.json5's postUpgradeTask may run.
+          export RENOVATE_ALLOWED_COMMANDS='["^scripts/renovate/update-nix-hashes\\.sh nixos/pkgs/[A-Za-z0-9._-]+\\.nix$"]'
+
+          # Commit as the bot account, and authenticate to gitea's registry as it.
+          # --fail-with-body: on a 401/403, gitea's body names the missing scope.
+          bot=$(curl -sS --fail-with-body -H "Authorization: token $RENOVATE_TOKEN" "$RENOVATE_ENDPOINT/user") || {
+            echo "::error::GET /user failed (token needs read:user): $bot"
+            exit 1
+          }
+          login=$(jq -r .login <<<"$bot")
+          email=$(jq -r .email <<<"$bot")
+          export RENOVATE_GIT_AUTHOR="Renovate Bot <$email>"
+
+          registry=$(sed -E 's#^https?://##; s#/.*##' <<<"$GITHUB_SERVER_URL")
+          # gitea resolves to a LAN address, which Renovate's internalHostAccess guard
+          # treats as internal: it warns today, and will block once the default becomes
+          # `block`. No hostType, so the gitea API and the docker registry both match.
+          rules=$(jq -nc --arg host "$registry" --arg user "$login" --arg pass "$RENOVATE_TOKEN" \
+            '[{matchHost: $host, allowInternal: true},
+              {hostType: "docker", matchHost: $host, username: $user, password: $pass}]')
+          if [ -n "$DOCKERHUB_USERNAME" ] && [ -n "$DOCKERHUB_TOKEN" ]; then
+            rules=$(jq -c --arg user "$DOCKERHUB_USERNAME" --arg pass "$DOCKERHUB_TOKEN" \
+              '. + [{hostType: "docker", matchHost: "docker.io", username: $user, password: $pass}]' <<<"$rules")
+          fi
+          export RENOVATE_HOST_RULES="$rules"
+
+          # Renovate pushes to a token-in-URL remote. Since curl 8.23, git sees the
+          # effective URL without the userinfo, takes it for a redirect, and drops the
+          # token: every push POST got a 401, and git then sat at a password prompt on
+          # the step's pty until the job timed out (2026-10-30). So send the token as
+          # a header, and answer any prompt with an empty askpass (a failing one,
+          # `false`, falls back to the tty).
+          # A gitconfig under a HOME of its own, not GIT_* env vars: Renovate runs git
+          # with a filtered environment that keeps HOME but drops those. mktemp -d is
+          # 0700, and the trap removes it, token included.
+          git_home=$(mktemp -d /tmp/renovate-home.XXXXXX)
+          trap 'rm -rf "$git_home"' EXIT
+          git config --file "$git_home/.gitconfig" "http.$GITHUB_SERVER_URL/.extraheader" \
+            "Authorization: basic $(printf '%s:%s' "$login" "$RENOVATE_TOKEN" | base64 -w0)"
+          git config --file "$git_home/.gitconfig" core.askPass "$(type -P true)"
+
+          # HOME only for renovate, so nix shell keeps the runner's eval/fetch cache.
+          nix shell --inputs-from . nixpkgs#renovate -c env HOME="$git_home" renovate

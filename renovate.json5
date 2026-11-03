@@ -1,0 +1,113 @@
+// Renovate: bumps what `nix flake update` can't see — the container images pinned in
+// the modules, and the prebuilt packages under nixos/pkgs/. Runs from
+// .gitea/workflows/renovate.yaml; the platform/token/host settings live there, this
+// file is only the repo policy.
+//
+// Merging is deploying: cassie-box auto-upgrades hourly from the GitHub mirror of
+// main, so anything automerged is live within the hour. Hence automerge is limited to
+// digest-only bumps (same tag, rebuilt image), grouped into one PR so CI builds once.
+// See docs/handoff-checklist.md before relying on this once the box has shipped.
+{
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+  extends: ['config:recommended'],
+  timezone: 'America/Los_Angeles',
+  labels: ['renovate'],
+
+  // flake.lock is update-flake.yaml's job; don't open a second PR for the same thing.
+  nix: { enabled: false },
+
+  customManagers: [
+    {
+      // Every `image = "repo:tag[@sha256:…]"` in a module. `${image}` indirections and
+      // the commented-out `# image = "";` template lines don't match. Images with no tag
+      // at all aren't matched either — give them a tag to bring them under Renovate.
+      customType: 'regex',
+      description: 'Container images in modules',
+      managerFilePatterns: ['/^nixos/.+\\.nix$/'],
+      matchStrings: [
+        'image *= *"(?<depName>[^":@${}]+):(?<currentValue>[^"@]+)(@(?<currentDigest>sha256:[a-f0-9]+))?"',
+      ],
+      datasourceTemplate: 'docker',
+      // Needed so pinning can ADD a digest; the default only rewrites captured groups.
+      autoReplaceStringTemplate: 'image = "{{{depName}}}:{{{newValue}}}{{#if newDigest}}@{{{newDigest}}}{{/if}}"',
+    },
+    {
+      // Second images in a module's let block: `apiImage = "…"`, `webImage = "…"`, etc.
+      // No autoReplaceStringTemplate (it would need the variable name back), so these get
+      // tag/digest updates in place but can't have a digest ADDED — write new ones pinned.
+      customType: 'regex',
+      description: 'Named *Image variables in modules',
+      managerFilePatterns: ['/^nixos/.+\\.nix$/'],
+      matchStrings: [
+        '[a-z]+Image *= *"(?<depName>[^":@${}]+):(?<currentValue>[^"@]+)(@(?<currentDigest>sha256:[a-f0-9]+))?"',
+      ],
+      datasourceTemplate: 'docker',
+    },
+    {
+      // Hand-written packages under nixos/pkgs/, annotated with a comment above `version`:
+      //   # renovate: datasource=github-releases depName=owner/repo
+      //   version = "1.2.3";
+      // The fixed-output hash is recomputed by the postUpgradeTask below.
+      customType: 'regex',
+      description: 'Annotated versions in nixos/pkgs',
+      managerFilePatterns: ['/^nixos/pkgs/.+\\.nix$/'],
+      matchStrings: [
+        '#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(\\s+versioning=(?<versioning>\\S+))?\\s*\\n\\s*version\\s*=\\s*"(?<currentValue>[^"]+)"',
+      ],
+      versioningTemplate: '{{#if versioning}}{{{versioning}}}{{else}}loose{{/if}}',
+    },
+  ],
+
+  packageRules: [
+    {
+      // Turns bare `name:tag` images into `name:tag@sha256:…`, so a podman re-pull can't
+      // silently change what's running and a rollback actually rolls the image back.
+      // A packageRule, not top-level: the regex manager's own defaults reset it to false.
+      description: 'Pin container image digests',
+      matchDatasources: ['docker'],
+      pinDigests: true,
+    },
+    {
+      description: 'Digest-only bumps: one grouped PR, merged once CI is green',
+      matchUpdateTypes: ['digest'],
+      groupName: 'container digests',
+      automerge: true,
+      // Daytime only, so a bad bump lands while someone is awake to notice. It still
+      // has to pass build-hosts.yaml's cassie-box build first.
+      automergeSchedule: ['after 6am and before 10pm'],
+    },
+    {
+      description: 'First-time digest pinning: one PR, reviewed — it freezes whatever `latest` is today',
+      matchUpdateTypes: ['pinDigest'],
+      groupName: 'pin container digests',
+      automerge: false,
+    },
+    {
+      // A major bump of a database image doesn't upgrade the data directory: postgres
+      // refuses to start on the old one. Those are a planned dump/restore, not a PR.
+      // pgautoupgrade does upgrade in place, but its 18 images look for the cluster at
+      // /var/lib/postgresql/18/docker, not the mounted .../data, and silently initdb an
+      // empty one inside the container — which wiped gitea's view of its DB on
+      // izzy-nix-config (2026-10-15).
+      description: 'No major bumps for stateful database images',
+      matchDatasources: ['docker'],
+      matchPackageNames: ['/(^|/)(postgres|pgautoupgrade|redis|valkey|mariadb|mysql|mongo)$/'],
+      matchUpdateTypes: ['major'],
+      enabled: false,
+    },
+    {
+      description: 'Immich server and ML must stay on the same version',
+      matchPackageNames: ['/^ghcr\\.io/immich-app//'],
+      groupName: 'immich',
+    },
+    {
+      description: 'nixos/pkgs bumps: recompute the fixed-output hashes',
+      matchFileNames: ['nixos/pkgs/**'],
+      postUpgradeTasks: {
+        commands: ['scripts/renovate/update-nix-hashes.sh {{{packageFile}}}'],
+        fileFilters: ['nixos/pkgs/**'],
+        executionMode: 'update',
+      },
+    },
+  ],
+}

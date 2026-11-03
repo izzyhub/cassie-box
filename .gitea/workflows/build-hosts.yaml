@@ -1,0 +1,61 @@
+---
+# Evaluate both configurations on every change, and on every push also BUILD
+# cassie-box. The build is the real gate: cassie-box auto-upgrades hourly from the
+# GitHub mirror of main, so a renovate automerge is live within the hour. Building
+# here catches a broken image bump or boat-ray build before the box tries it.
+#
+# Nothing is pushed to a cache: cassie-box doesn't substitute from attic, so the
+# build only warms the runner's own store.
+name: Build Hosts
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+    paths:
+      - "**.nix"
+      - "flake.lock"
+  push:
+    paths:
+      - "**.nix"
+      - "flake.lock"
+
+# Authenticated github.com fetches: nix resolves every `github:` flake input
+# through api.github.com, capped at 60 req/hr per IP when unauthenticated.
+# The token is a zero-scope PAT (public read only), set as a Gitea Actions
+# secret; nothing on the host uses it. Guarded: if the secret is
+# unset, a bare `github.com=` makes nix send an empty token, which GitHub
+# rejects with 401 Bad credentials instead of falling back to anonymous.
+env:
+  NIX_CONFIG: ${{ secrets.NIX_GITHUB_TOKEN && format('access-tokens = github.com={0}', secrets.NIX_GITHUB_TOKEN) || '' }}
+
+jobs:
+  eval:
+    name: "Eval ${{ matrix.host }}"
+    runs-on: nix
+    strategy:
+      fail-fast: false
+      matrix:
+        host:
+          - cassie-box
+          - cassie-box-installer
+    steps:
+      - uses: https://github.com/actions/checkout@v7
+      - name: Evaluate system derivation
+        run: nix eval --raw .#nixosConfigurations.${{ matrix.host }}.config.system.build.toplevel.drvPath
+
+  build:
+    name: Build cassie-box
+    # The nix-build runners have the cores, and the native runner shares its host's
+    # store, so each run is incremental.
+    runs-on: nix-build
+    # PRs from this repo also push a branch, which already triggers this — skip the
+    # pull_request event so the same commit isn't built twice.
+    if: gitea.event_name != 'pull_request'
+    steps:
+      - uses: https://github.com/actions/checkout@v7
+      - name: Build
+        run: nix build --keep-going --no-link .#nixosConfigurations.cassie-box.config.system.build.toplevel

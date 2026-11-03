@@ -1,0 +1,33 @@
+---
+name: Shell Lint
+
+on:
+  pull_request:
+    paths:
+      - "**.sh"
+  push:
+    paths:
+      - "**.sh"
+
+# The install, deploy and task scripts are shell, not nix, so the nix workflows
+# (path-filtered to **.nix) never run on them.
+
+jobs:
+  lint:
+    runs-on: nix
+    steps:
+      - uses: https://github.com/actions/checkout@v7
+
+      - name: Run shellcheck
+        run: |
+          # -S warning: the info/style levels flag SC2016 on every sed
+          # literal like '$SHELLY_HOME', which is exactly what we want there.
+          # A loop rather than xargs: one file per invocation means the
+          # first failing file is reported on its own, with its own path.
+          status=0
+          while IFS= read -r f; do
+            echo "::group::$f"
+            nix run nixpkgs#shellcheck -- -S warning -x "$f" || status=1
+            echo "::endgroup::"
+          done < <(find . -name '*.sh' -not -path './.git/*' | sort)
+          exit $status
