@@ -113,12 +113,13 @@ in
     virtualisation.oci-containers.containers =
       {
         immich-server = {
-          image = "ghcr.io/immich-app/immich-server:v1.125.7";
+          image = "ghcr.io/immich-app/immich-server:v3.3.5@sha256:485d546a2e31d6a8b4db8423fcba5c109de8c218d93410af115fd1ccfc4352a6";
           environmentFiles = [ config.sops.secrets."${category}/${app}/env".path ];
           inherit environment;
           volumes = [
             "/etc/localtime:/etc/localtime:ro"
-            "${dataFolder}/photos/immich/:/usr/src/app/upload"
+            # /data since v1.136; /usr/src/app/upload is the old location.
+            "${dataFolder}/photos/immich/:/data"
           ];
           dependsOn = [ "immich-redis" "immich-postgres" ];
           ports = [ "${builtins.toString port}:${builtins.toString port}" ];
@@ -134,10 +135,9 @@ in
 
 
         immich-machine-learning = {
-          image = "ghcr.io/immich-app/immich-machine-learning:v1.125.7";
+          image = "ghcr.io/immich-app/immich-machine-learning:v3.3.5@sha256:5b28c9352c8374b8a1ed96fbdd8d6755fea6e43510ec43fdf6538aa02ea40f56";
           inherit environment;
           volumes = [
-            "${dataFolder}/photos/immich/:/usr/src/app/upload"
             "/var/lib/immich/machine-learning:/cache"
           ];
           extraOptions = [
@@ -150,7 +150,8 @@ in
         };
 
         immich-redis = {
-          image = "registry.hub.docker.com/library/redis:6.2-alpine@sha256:905c4ee67b8e0aa955331960d2aa745781e6bd89afc44a8584bfd13bc890f0ae";
+          # Upstream's compose switched redis to valkey.
+          image = "docker.io/valkey/valkey:9@sha256:c123e3715db63d06d4ad6964884037aa0d5d4d703939b9929954112889708e1d";
           extraOptions = [
             "--health-cmd=redis-cli ping || exit 1"
             "--health-interval=10s"
@@ -162,12 +163,19 @@ in
 
 
         immich-postgres = {
-          image = "ghcr.io/immich-app/postgres:14-vectorchord0.3.0-pgvectors0.2.0";
+          image = "ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0@sha256:bcf63357191b76a916ae5eb93464d65c07511da41e3bf7a8416db519b40b1c23";
           environmentFiles = [ config.sops.secrets."${category}/${app}/env".path ];
           environment = {
+            # Match DB_USERNAME / DB_DATABASE_NAME in the sops env, as upstream's compose
+            # does. Without POSTGRES_DB, initdb never creates the `immich` database.
+            POSTGRES_USER = "postgres";
+            POSTGRES_DB = "immich";
             POSTGRES_INITDB_ARGS = "--data-checksums";
           };
-          volumes = [ "/var/lib/immich/postgres/:/var/lib/postgresql/data" ];
+          # A fresh data dir for the v3 jump (2026-11-02). The old v1.125 cluster in
+          # /var/lib/immich/postgres held no real data; delete it once v3 is up.
+          volumes = [ "/var/lib/immich/postgres-v3/:/var/lib/postgresql/data" ];
+          extraOptions = [ "--shm-size=128m" ];
         };
       };
 
