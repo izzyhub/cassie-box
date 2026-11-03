@@ -67,22 +67,55 @@ in
       restartUnits = [ "${app}.service" ];
     };
 
-    # enable browserless container on this system
-    mySystem.services.browserless-chrome.enable = true;
+    mySystem = {
+      services = {
+        # enable browserless container on this system
+        browserless-chrome.enable = true;
 
-    users.users.izzy.extraGroups = [ (builtins.toString config.users.groups.rxresume.gid) ];
-    users.users.cassie.extraGroups = [ (builtins.toString config.users.groups.rxresume.gid) ];
 
-    users.users = {
-      rxresume = {
-        group = "rxresume";
-        home = "/var/lib/rxresume/";
-        uid = 319;
+        # homepage integration
+        homepage.infrastructure = mkIf
+          cfg.addToHomepage
+          [
+            {
+              ${app} = {
+                icon = "${app}.svg";
+                href = "https://${url}";
+                inherit description;
+              };
+            }
+          ];
+
+        ### gatus integration
+        gatus.monitors = mkIf
+          cfg.monitor
+          [
+            {
+              name = app;
+              group = "${category}";
+              url = "https://${url}";
+              interval = "1m";
+              conditions = [ "[CONNECTED] == true" "[STATUS] == 200" "[RESPONSE_TIME] < 50" ];
+            }
+          ];
       };
     };
 
-    users.groups = {
-      rxresume.gid = 319;
+    users = {
+      users = {
+        izzy.extraGroups = [ (builtins.toString config.users.groups.rxresume.gid) ];
+        cassie.extraGroups = [ (builtins.toString config.users.groups.rxresume.gid) ];
+
+        rxresume = {
+          group = "rxresume";
+          home = "/var/lib/rxresume/";
+          uid = 319;
+        };
+      };
+
+      groups = {
+        rxresume.gid = 319;
+      };
     };
 
     virtualisation.oci-containers.containers = config.lib.mySystem.mkContainer {
@@ -117,39 +150,37 @@ in
       requires = [ "postgresql.service" ];
     };
 
+    services = {
+      ### Ingress
+      nginx.virtualHosts = config.lib.mySystem.mkVhost {
+        inherit app port;
+        host = url;
+        container = true;
+        websockets = true;
+      };
 
-    # homepage integration
-    mySystem.services.homepage.infrastructure = mkIf
-      cfg.addToHomepage
-      [
-        {
-          ${app} = {
-            icon = "${app}.svg";
-            href = "https://${url}";
-            inherit description;
-          };
-        }
-      ];
+      restic.backups = mkIf
+        cfg.backup
+        (config.lib.mySystem.mkRestic
+          {
+            inherit app user;
+            paths = [ appFolder ];
+            inherit appFolder;
+          });
 
-    ### gatus integration
-    mySystem.services.gatus.monitors = mkIf
-      cfg.monitor
-      [
-        {
+      # ensure postgresql setup
+      postgresql = {
+        ensureDatabases = [ app ];
+        ensureUsers = [{
           name = app;
-          group = "${category}";
-          url = "https://${url}";
-          interval = "1m";
-          conditions = [ "[CONNECTED] == true" "[STATUS] == 200" "[RESPONSE_TIME] < 50" ];
-        }
-      ];
+          ensureDBOwnership = true;
+        }];
+      };
 
-    ### Ingress
-    services.nginx.virtualHosts = config.lib.mySystem.mkVhost {
-      inherit app port;
-      host = url;
-      container = true;
-      websockets = true;
+
+      postgresqlBackup = {
+        databases = [ app ];
+      };
     };
 
     ### firewall config
@@ -164,29 +195,6 @@ in
       (mkIf (!cfg.backup && config.mySystem.purpose != "Development")
         "WARNING: Backups for ${app} are disabled!")
     ];
-
-    services.restic.backups = mkIf
-      cfg.backup
-      (config.lib.mySystem.mkRestic
-        {
-          inherit app user;
-          paths = [ appFolder ];
-          inherit appFolder;
-        });
-
-    # ensure postgresql setup
-    services.postgresql = {
-      ensureDatabases = [ app ];
-      ensureUsers = [{
-        name = app;
-        ensureDBOwnership = true;
-      }];
-    };
-
-
-    services.postgresqlBackup = {
-      databases = [ app ];
-    };
 
     # Create appFolder directory
     systemd.tmpfiles.rules = [

@@ -53,7 +53,6 @@ in
           description = "Enable backups";
           default = true;
         };
-
     };
 
   config = mkIf cfg.enable {
@@ -66,9 +65,13 @@ in
     #   restartUnits = [ "${app}.service" ];
     # };
 
-    users.users.cassie.extraGroups = [ group ];
-    users.users.izzy.extraGroups = [ group ];
-    users.users.${user}.extraGroups = [ "media" ];
+    users = {
+      users = {
+        cassie.extraGroups = [ group ];
+        izzy.extraGroups = [ group ];
+        ${user}.extraGroups = [ "media" ];
+      };
+    };
 
     # calibre-web's sandbox bind-mounts the library, so the unit can't start until it
     # exists. Shared with the calibre container (PUID 568 = kah) via the media group.
@@ -76,19 +79,33 @@ in
       "d ${config.mySystem.dataFolder}/media/books 2775 kah media -"
     ];
 
-
     environment.persistence."${config.mySystem.persistentFolder}" = lib.mkIf config.mySystem.system.impermanence.enable {
       directories = [{ directory = appFolder; inherit user; inherit group; mode = "750"; }];
     };
 
-    ## service
-    services.calibre-web = {
-      enable = true;
-      listen.ip = "0.0.0.0";
-      listen.port = port;
-      options = {
-        calibreLibrary = "${config.mySystem.dataFolder}/media/books/";
+    services = {
+      ## service
+      calibre-web = {
+        enable = true;
+        listen.ip = "0.0.0.0";
+        listen.port = port;
+        options = {
+          calibreLibrary = "${config.mySystem.dataFolder}/media/books/";
+        };
       };
+
+      ### Ingress
+      nginx.virtualHosts = config.lib.mySystem.mkVhost {
+        inherit app port;
+        host = url;
+      };
+
+      restic.backups = mkIf cfg.backup (config.lib.mySystem.mkRestic
+        {
+          inherit app user;
+          paths = [ appFolder ];
+          inherit appFolder;
+        });
     };
 
     # homepage integration
@@ -113,12 +130,6 @@ in
       }
     ];
 
-    ### Ingress
-    services.nginx.virtualHosts = config.lib.mySystem.mkVhost {
-      inherit app port;
-      host = url;
-    };
-
     ### firewall config
 
     # networking.firewall = mkIf cfg.openFirewall {
@@ -131,13 +142,5 @@ in
       (mkIf (!cfg.backup && config.mySystem.purpose != "Development")
         "WARNING: Backups for ${app} are disabled!")
     ];
-
-    services.restic.backups = mkIf cfg.backup (config.lib.mySystem.mkRestic
-      {
-        inherit app user;
-        paths = [ appFolder ];
-        inherit appFolder;
-      });
-
   };
 }

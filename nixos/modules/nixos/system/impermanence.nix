@@ -8,46 +8,50 @@ let
 in
 with lib;
 {
-  options.mySystem.system.impermanence.rootBlankSnapshotName = lib.mkOption {
-    type = lib.types.str;
-    default = "blank";
-  };
-  options.mySystem.system.impermanence.rootPoolName = lib.mkOption {
-    type = lib.types.str;
-    default = "rpool/local/root";
-  };
-  options.mySystem.system.impermanence.persistPath = lib.mkOption {
-    type = lib.types.str;
-    default = "/persist";
-  };
-
-  # Declare environment.persistence option for compatibility
-  options.environment.persistence = lib.mkOption {
-    type = lib.types.attrsOf (lib.types.submodule {
-      options = {
-        hideMounts = lib.mkOption {
-          type = lib.types.bool;
-          default = false;
-        };
-        directories = lib.mkOption {
-          type = lib.types.listOf (lib.types.either lib.types.str (lib.types.submodule {
-            options = {
-              directory = lib.mkOption { type = lib.types.str; };
-              user = lib.mkOption { type = lib.types.str; default = "root"; };
-              group = lib.mkOption { type = lib.types.str; default = "root"; };
-              mode = lib.mkOption { type = lib.types.str; default = "755"; };
-            };
-          }));
-          default = [ ];
-        };
-        files = lib.mkOption {
-          type = lib.types.listOf lib.types.str;
-          default = [ ];
-        };
+  options = {
+    mySystem.system.impermanence = {
+      rootBlankSnapshotName = lib.mkOption {
+        type = lib.types.str;
+        default = "blank";
       };
-    });
-    default = { };
-    description = "Impermanence configuration (stub when disabled)";
+      rootPoolName = lib.mkOption {
+        type = lib.types.str;
+        default = "rpool/local/root";
+      };
+      persistPath = lib.mkOption {
+        type = lib.types.str;
+        default = "/persist";
+      };
+    };
+
+    # Declare environment.persistence option for compatibility
+    environment.persistence = lib.mkOption {
+      type = lib.types.attrsOf (lib.types.submodule {
+        options = {
+          hideMounts = lib.mkOption {
+            type = lib.types.bool;
+            default = false;
+          };
+          directories = lib.mkOption {
+            type = lib.types.listOf (lib.types.either lib.types.str (lib.types.submodule {
+              options = {
+                directory = lib.mkOption { type = lib.types.str; };
+                user = lib.mkOption { type = lib.types.str; default = "root"; };
+                group = lib.mkOption { type = lib.types.str; default = "root"; };
+                mode = lib.mkOption { type = lib.types.str; default = "755"; };
+              };
+            }));
+            default = [ ];
+          };
+          files = lib.mkOption {
+            type = lib.types.listOf lib.types.str;
+            default = [ ];
+          };
+        };
+      });
+      default = { };
+      description = "Impermanence configuration (stub when disabled)";
+    };
   };
 
 

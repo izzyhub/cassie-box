@@ -8,19 +8,23 @@ with lib;
 
   config = {
 
-    mySystem.services.monitoring.enable = true;
-    mySystem.services.rebootRequiredCheck.enable = true;
-    mySystem.security.wheelNeedsSudoPassword = false;
+    mySystem = {
+      services.monitoring.enable = true;
+      services.rebootRequiredCheck.enable = true;
+      security.wheelNeedsSudoPassword = false;
+    };
 
-    services.logrotate.enable = mkDefault true;
-    services.smartd.enable = mkDefault true;
+    services = {
+      logrotate.enable = mkDefault true;
+      smartd.enable = mkDefault true;
+      pulseaudio.enable = false;
+      udisks2.enable = mkDefault false;
+    };
     programs.command-not-found.enable = mkDefault false;
 
-    services.pulseaudio.enable = false;
     environment.systemPackages = with pkgs; [
       tmux
       btop
     ];
-    services.udisks2.enable = mkDefault false;
   };
 }

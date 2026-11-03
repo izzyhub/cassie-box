@@ -59,7 +59,6 @@ in
       };
       syncPath = lib.mkOption {
         type = lib.types.str;
-
       };
       user = lib.mkOption {
         type = lib.types.str;
@@ -84,7 +83,6 @@ in
     users.users.cassie.extraGroups = [ group ];
     users.users.izzy.extraGroups = [ group ];
 
-
     # Folder perms - create both dataDir and configDir with proper ownership
     systemd.tmpfiles.rules = [
       "d ${cfg.dataDir} 0750 ${user} ${group} -"
@@ -95,35 +93,49 @@ in
       directories = [{ directory = appFolder; inherit user; inherit group; mode = "750"; }];
     };
 
-
-    ## service
-    # Ref: https://wes.today/nixos-syncthing/
-    #
-    # First run may need settings omitted, then a setting changed in webui and saved
-    # just to create the config.xml file that the syncthing-init file needs
-    #
-    services.syncthing = {
-      enable = true;
-      inherit (cfg) group;
-      guiAddress = "0.0.0.0:8384";
-      openDefaultPorts = true;
-      overrideDevices = true;
-      overrideFolders = true;
-      inherit (cfg) user;
-      inherit (cfg) dataDir;
-      settings = {
-        options.urAccepted = -1;
-        devices =
-          {
-            "drop-box-cassie" = { id = "4TD66JX-TO4NBCX-2HSAXJL-JK43SVI-F5QYEWU-GTDPUNQ-BTLAM7Z-DLTEOAR"; };
-          };
-        folders = {
-          "drop-box-cassie" = {
-            path = "${cfg.syncPath}/drop-box-cassie";
-            devices = [ "drop-box-cassie" ];
+    services = {
+      ## service
+      # Ref: https://wes.today/nixos-syncthing/
+      #
+      # First run may need settings omitted, then a setting changed in webui and saved
+      # just to create the config.xml file that the syncthing-init file needs
+      #
+      syncthing = {
+        enable = true;
+        inherit (cfg) group;
+        guiAddress = "0.0.0.0:8384";
+        openDefaultPorts = true;
+        overrideDevices = true;
+        overrideFolders = true;
+        inherit (cfg) user;
+        inherit (cfg) dataDir;
+        settings = {
+          options.urAccepted = -1;
+          devices =
+            {
+              "drop-box-cassie" = { id = "4TD66JX-TO4NBCX-2HSAXJL-JK43SVI-F5QYEWU-GTDPUNQ-BTLAM7Z-DLTEOAR"; };
+            };
+          folders = {
+            "drop-box-cassie" = {
+              path = "${cfg.syncPath}/drop-box-cassie";
+              devices = [ "drop-box-cassie" ];
+            };
           };
         };
       };
+
+      ### Ingress
+      nginx.virtualHosts = config.lib.mySystem.mkVhost {
+        inherit app port;
+        host = url;
+      };
+
+      restic.backups = mkIf cfg.backup (config.lib.mySystem.mkRestic
+        {
+          inherit app user;
+          paths = [ appFolder ];
+          inherit appFolder;
+        });
     };
 
     # homepage integration
@@ -148,12 +160,6 @@ in
     #   }
     # ];
 
-    ### Ingress
-    services.nginx.virtualHosts = config.lib.mySystem.mkVhost {
-      inherit app port;
-      host = url;
-    };
-
     ### firewall config
 
     # networking.firewall = mkIf cfg.openFirewall {
@@ -167,19 +173,8 @@ in
         "WARNING: Backups for ${app} are disabled!")
     ];
 
-    services.restic.backups = mkIf cfg.backup (config.lib.mySystem.mkRestic
-      {
-        inherit app user;
-        paths = [ appFolder ];
-        inherit appFolder;
-      });
-
-
     # services.postgresqlBackup = {
     #   databases = [ app ];
     # };
-
-
-
   };
 }

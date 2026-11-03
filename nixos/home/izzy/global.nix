@@ -7,14 +7,16 @@ with config;
   ];
 
   config = {
-    myHome.username = "izzy";
-    myHome.homeDirectory = "/home/izzy/";
-
-    myHome.shell.git = {
-      enable = true;
+    myHome = {
       username = "izzy";
-      email = "19149206+izzyhub@users.noreply.github.com";
-      # signingKey = ""; # TODO setup signing keys n shit
+      homeDirectory = "/home/izzy/";
+
+      shell.git = {
+        enable = true;
+        username = "izzy";
+        email = "19149206+izzyhub@users.noreply.github.com";
+        # signingKey = ""; # TODO setup signing keys n shit
+      };
     };
 
     # services.gpg-agent.pinentryPackage = pkgs.pinentry-qt;

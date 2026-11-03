@@ -108,9 +108,38 @@ in
       directories = [{ directory = appFolder; inherit user; inherit group; mode = "2775"; }];
     };
 
-    # Host port registry (nixos/modules/nixos/ports.nix).
-    mySystem.ports.claims = {
-      "${app}-http" = { port = port; address = "127.0.0.1"; claimedBy = "${app} web UI"; };
+    mySystem = {
+      # Host port registry (nixos/modules/nixos/ports.nix).
+      ports.claims = {
+        "${app}-http" = { inherit port; address = "127.0.0.1"; claimedBy = "${app} web UI"; };
+      };
+
+      # Auth is PAM against real system accounts (the upstream module points
+      # /etc/pam.d/rstudio at /etc/pam.d/login), so izzy and cassie sign in with
+      # their normal passwords - the ones sops sets via hashedPasswordFile.
+
+      # homepage integration
+      services.homepage.infrastructure = mkIf cfg.addToHomepage [
+        {
+          ${app} = {
+            icon = "rstudio.svg";
+            href = "https://${url}";
+            inherit description;
+          };
+        }
+      ];
+
+      ### gatus integration
+      services.gatus.monitors = mkIf cfg.monitor [
+        {
+          name = app;
+          group = "${category}";
+          url = "https://${url}";
+          interval = "1m";
+          # The sign-in page is heavier than the repo's usual 50ms budget.
+          conditions = [ "[CONNECTED] == true" "[STATUS] == 200" "[RESPONSE_TIME] < 500" ];
+        }
+      ];
     };
 
     # Sessions run as the logged-in user, so per-user state lands in their home
@@ -120,56 +149,38 @@ in
       "d ${appFolder} 2775 ${user} ${group} -"
     ];
 
-    services.rstudio-server = {
-      enable = true;
-      package = rstudioPkg;
-      listenAddr = "127.0.0.1";
-      serverWorkingDir = appFolder;
-      rserverExtraConfig = ''
-        www-port=${builtins.toString port}
-      '';
-    };
+    services = {
+      rstudio-server = {
+        enable = true;
+        package = rstudioPkg;
+        listenAddr = "127.0.0.1";
+        serverWorkingDir = appFolder;
+        rserverExtraConfig = ''
+          www-port=${builtins.toString port}
+        '';
+      };
 
-    # Auth is PAM against real system accounts (the upstream module points
-    # /etc/pam.d/rstudio at /etc/pam.d/login), so izzy and cassie sign in with
-    # their normal passwords - the ones sops sets via hashedPasswordFile.
+      ### Ingress
+      nginx.virtualHosts = config.lib.mySystem.mkVhost {
+        inherit app port;
+        host = url;
+        # RStudio drives the whole IDE over a websocket, and a long-running
+        # chunk must not be cut off mid-render by the default 60s proxy read
+        # timeout.
+        websockets = true;
+        extraLocationConfig = ''
+          proxy_read_timeout 3600s;
+          proxy_send_timeout 3600s;
+          client_max_body_size 0;
+        '';
+      };
 
-    # homepage integration
-    mySystem.services.homepage.infrastructure = mkIf cfg.addToHomepage [
-      {
-        ${app} = {
-          icon = "rstudio.svg";
-          href = "https://${url}";
-          inherit description;
-        };
-      }
-    ];
-
-    ### gatus integration
-    mySystem.services.gatus.monitors = mkIf cfg.monitor [
-      {
-        name = app;
-        group = "${category}";
-        url = "https://${url}";
-        interval = "1m";
-        # The sign-in page is heavier than the repo's usual 50ms budget.
-        conditions = [ "[CONNECTED] == true" "[STATUS] == 200" "[RESPONSE_TIME] < 500" ];
-      }
-    ];
-
-    ### Ingress
-    services.nginx.virtualHosts = config.lib.mySystem.mkVhost {
-      inherit app port;
-      host = url;
-      # RStudio drives the whole IDE over a websocket, and a long-running
-      # chunk must not be cut off mid-render by the default 60s proxy read
-      # timeout.
-      websockets = true;
-      extraLocationConfig = ''
-        proxy_read_timeout 3600s;
-        proxy_send_timeout 3600s;
-        client_max_body_size 0;
-      '';
+      restic.backups = mkIf cfg.backup (config.lib.mySystem.mkRestic
+        {
+          inherit app user;
+          paths = [ appFolder ];
+          inherit appFolder;
+        });
     };
 
     ### backups
@@ -177,13 +188,6 @@ in
       (mkIf (!cfg.backup && config.mySystem.purpose != "Development")
         "WARNING: Backups for ${app} are disabled!")
     ];
-
-    services.restic.backups = mkIf cfg.backup (config.lib.mySystem.mkRestic
-      {
-        inherit app user;
-        paths = [ appFolder ];
-        inherit appFolder;
-      });
 
   };
 }

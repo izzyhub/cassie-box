@@ -81,22 +81,39 @@ in
     };
 
 
-    ## service
-    services.tandoor-recipes = {
-      enable = true;
-      extraConfig = {
-        GUNICORN_MEDIA = "0";
-        # GHSA-g8w3-p77x-mmxh: with MEDIA_ROOT == the state dir, the nginx
-        # /media/ alias below served db.sqlite3 too. 26.05 defaults this to
-        # the media/ subdir, but only for stateVersion >= 26.05, so set it
-        # explicitly. Requires the existing media to be moved on the host:
-        #   systemctl stop tandoor-recipes
-        #   mkdir -p /var/lib/tandoor-recipes/media
-        #   mv /var/lib/tandoor-recipes/{files,recipes} /var/lib/tandoor-recipes/media/
-        MEDIA_ROOT = "/var/lib/tandoor-recipes/media";
+    services = {
+      ## service
+      tandoor-recipes = {
+        enable = true;
+        extraConfig = {
+          GUNICORN_MEDIA = "0";
+          # GHSA-g8w3-p77x-mmxh: with MEDIA_ROOT == the state dir, the nginx
+          # /media/ alias below served db.sqlite3 too. 26.05 defaults this to
+          # the media/ subdir, but only for stateVersion >= 26.05, so set it
+          # explicitly. Requires the existing media to be moved on the host:
+          #   systemctl stop tandoor-recipes
+          #   mkdir -p /var/lib/tandoor-recipes/media
+          #   mv /var/lib/tandoor-recipes/{files,recipes} /var/lib/tandoor-recipes/media/
+          MEDIA_ROOT = "/var/lib/tandoor-recipes/media";
+        };
       };
-    };
 
+      ### Ingress
+      nginx.virtualHosts = mkMerge [
+        (config.lib.mySystem.mkVhost {
+          inherit app port;
+          host = url;
+        })
+        { ${url}.locations."/media/".alias = "/var/lib/tandoor-recipes/media/"; } # needed to show images
+      ];
+
+      restic.backups = mkIf cfg.backup (config.lib.mySystem.mkRestic
+        {
+          inherit app user;
+          paths = [ appFolder ];
+          inherit appFolder;
+        });
+    };
 
     # homepage integration
     mySystem.services.homepage.infrastructure = mkIf cfg.addToHomepage [
@@ -120,18 +137,8 @@ in
       }
     ];
 
-
     # needed to show images
     users.groups.tandoor-recipes.members = [ "nginx" ];
-
-    ### Ingress
-    services.nginx.virtualHosts = mkMerge [
-      (config.lib.mySystem.mkVhost {
-        inherit app port;
-        host = url;
-      })
-      { ${url}.locations."/media/".alias = "/var/lib/tandoor-recipes/media/"; } # needed to show images
-    ];
 
     ### firewall config
 
@@ -145,13 +152,6 @@ in
       (mkIf (!cfg.backup && config.mySystem.purpose != "Development")
         "WARNING: Backups for ${app} are disabled!")
     ];
-
-    services.restic.backups = mkIf cfg.backup (config.lib.mySystem.mkRestic
-      {
-        inherit app user;
-        paths = [ appFolder ];
-        inherit appFolder;
-      });
 
 
     # services.postgresqlBackup = {

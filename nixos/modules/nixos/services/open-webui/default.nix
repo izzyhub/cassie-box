@@ -53,9 +53,6 @@ in
           description = "Enable backups";
           default = true;
         };
-
-
-
     };
 
   config = mkIf cfg.enable {
@@ -72,7 +69,6 @@ in
     users.users.cassie.extraGroups = [ group ];
     users.users.izzy.extraGroups = [ group ];
 
-
     # Folder perms - only for containers
     # systemd.tmpfiles.rules = [
     # "d ${appFolder}/ 0750 ${user} ${group} -"
@@ -82,73 +78,90 @@ in
       directories = [{ directory = appFolder; inherit user; inherit group; mode = "750"; }];
     };
 
+    services = {
+      ## service
+      open-webui = {
+        enable = true;
+        package = pkgs.unstable.open-webui;
+        # openFirewall=true;
+        inherit port;
+        environment = {
+          ANONYMIZED_TELEMETRY = "False";
+          DO_NOT_TRACK = "True";
 
-    ## service
-    services.open-webui = {
-      enable = true;
-      package = pkgs.unstable.open-webui;
-      # openFirewall=true;
-      inherit port;
-      environment = {
-        ANONYMIZED_TELEMETRY = "False";
-        DO_NOT_TRACK = "True";
+          DEFAULT_LOCALE = "en";
 
-        DEFAULT_LOCALE = "en";
+          ENABLE_ADMIN_CHAT_ACCESS = "True";
+          ENABLE_ADMIN_EXPORT = "True";
+          SHOW_ADMIN_DETAILS = "True";
+          ADMIN_EMAIL = "admin@${config.networking.hostName}";
 
-        ENABLE_ADMIN_CHAT_ACCESS = "True";
-        ENABLE_ADMIN_EXPORT = "True";
-        SHOW_ADMIN_DETAILS = "True";
-        ADMIN_EMAIL = "admin@${config.networking.hostName}";
+          USER_PERMISSIONS_WORKSPACE_MODELS_ACCESS = "True";
+          USER_PERMISSIONS_WORKSPACE_KNOWLEDGE_ACCESS = "True";
+          USER_PERMISSIONS_WORKSPACE_PROMPTS_ACCESS = "True";
+          USER_PERMISSIONS_WORKSPACE_TOOLS_ACCESS = "True";
 
-        USER_PERMISSIONS_WORKSPACE_MODELS_ACCESS = "True";
-        USER_PERMISSIONS_WORKSPACE_KNOWLEDGE_ACCESS = "True";
-        USER_PERMISSIONS_WORKSPACE_PROMPTS_ACCESS = "True";
-        USER_PERMISSIONS_WORKSPACE_TOOLS_ACCESS = "True";
+          USER_PERMISSIONS_CHAT_TEMPORARY = "True";
+          USER_PERMISSIONS_CHAT_FILE_UPLOAD = "True";
+          USER_PERMISSIONS_CHAT_EDIT = "True";
+          USER_PERMISSIONS_CHAT_DELETE = "True";
 
-        USER_PERMISSIONS_CHAT_TEMPORARY = "True";
-        USER_PERMISSIONS_CHAT_FILE_UPLOAD = "True";
-        USER_PERMISSIONS_CHAT_EDIT = "True";
-        USER_PERMISSIONS_CHAT_DELETE = "True";
+          ENABLE_CHANNELS = "True";
 
-        ENABLE_CHANNELS = "True";
+          ENABLE_REALTIME_CHAT_SAVE = "True";
 
-        ENABLE_REALTIME_CHAT_SAVE = "True";
+          ENABLE_AUTOCOMPLETE_GENERATION = "True";
+          AUTOCOMPLETE_GENERATION_INPUT_MAX_LENGTH = "-1";
 
-        ENABLE_AUTOCOMPLETE_GENERATION = "True";
-        AUTOCOMPLETE_GENERATION_INPUT_MAX_LENGTH = "-1";
+          ENABLE_RAG_WEB_SEARCH = "True";
+          CONTENT_EXTRACTION_ENGINE = "tika";
+          RAG_WEB_SEARCH_ENGINE = "searxng";
 
-        ENABLE_RAG_WEB_SEARCH = "True";
-        CONTENT_EXTRACTION_ENGINE = "tika";
-        RAG_WEB_SEARCH_ENGINE = "searxng";
+          ENABLE_SEARCH_QUERY_GENERATION = "True";
+          SEARXNG_QUERY_URL = "https://searxng.${config.networking.domain}/search";
 
-        ENABLE_SEARCH_QUERY_GENERATION = "True";
-        SEARXNG_QUERY_URL = "https://searxng.${config.networking.domain}/search";
+          ENABLE_TAGS_GENERATION = "True";
 
-        ENABLE_TAGS_GENERATION = "True";
+          ENABLE_IMAGE_GENERATION = "True";
 
-        ENABLE_IMAGE_GENERATION = "True";
+          YOUTUBE_LOADER_LANGUAGE = "en";
 
-        YOUTUBE_LOADER_LANGUAGE = "en";
+          ENABLE_MESSAGE_RATING = "True";
 
-        ENABLE_MESSAGE_RATING = "True";
+          ENABLE_COMMUNITY_SHARING = "True";
 
-        ENABLE_COMMUNITY_SHARING = "True";
+          ENABLE_RAG_WEB_LOADER_SSL_VERIFICATION = "True";
+          WEBUI_SESSION_COOKIE_SAME_SITE = "strict";
+          WEBUI_SESSION_COOKIE_SECURE = "True";
+          WEBUI_AUTH = "False";
 
-        ENABLE_RAG_WEB_LOADER_SSL_VERIFICATION = "True";
-        WEBUI_SESSION_COOKIE_SAME_SITE = "strict";
-        WEBUI_SESSION_COOKIE_SECURE = "True";
-        WEBUI_AUTH = "False";
-
-        ENABLE_OLLAMA_API = "True";
-        ENABLE_OPENAI_API = "True";
-        TIKA_SERVER_URL = "http://127.0.0.1:33001";
-
+          ENABLE_OLLAMA_API = "True";
+          ENABLE_OPENAI_API = "True";
+          TIKA_SERVER_URL = "http://127.0.0.1:33001";
+        };
+        environmentFile = config.sops.secrets."${category}/${app}/env".path;
       };
-      environmentFile = config.sops.secrets."${category}/${app}/env".path;
+
+      ### Ingress
+      nginx.virtualHosts.${url} = {
+        forceSSL = true;
+        useACMEHost = config.networking.domain;
+        locations."^~ /" = {
+          proxyPass = "http://127.0.0.1:${builtins.toString config.services.open-webui.port}";
+          proxyWebsockets = true;
+          extraConfig = ''
+            client_max_body_size 256m;
+          '';
+        };
+      };
+
+      restic.backups = mkIf cfg.backup (config.lib.mySystem.mkRestic
+        {
+          inherit app user;
+          paths = [ appFolder ];
+          inherit appFolder;
+        });
     };
-
-
-
 
     # homepage integration
     mySystem.services.homepage.infrastructure = mkIf cfg.addToHomepage [
@@ -172,19 +185,6 @@ in
       }
     ];
 
-    ### Ingress
-    services.nginx.virtualHosts.${url} = {
-      forceSSL = true;
-      useACMEHost = config.networking.domain;
-      locations."^~ /" = {
-        proxyPass = "http://127.0.0.1:${builtins.toString config.services.open-webui.port}";
-        proxyWebsockets = true;
-        extraConfig = ''
-          client_max_body_size 256m;
-        '';
-      };
-    };
-
     ### firewall config
 
     # networking.firewall = mkIf cfg.openFirewall {
@@ -198,19 +198,8 @@ in
         "WARNING: Backups for ${app} are disabled!")
     ];
 
-    services.restic.backups = mkIf cfg.backup (config.lib.mySystem.mkRestic
-      {
-        inherit app user;
-        paths = [ appFolder ];
-        inherit appFolder;
-      });
-
-
     # services.postgresqlBackup = {
     #   databases = [ app ];
     # };
-
-
-
   };
 }

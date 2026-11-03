@@ -82,20 +82,35 @@ in
     };
 
 
-    ## service
-    services.navidrome = {
-      enable = true;
-      settings = {
-        Address = "0.0.0.0";
-        Port = 4533;
-        MusicFolder = "${config.mySystem.dataFolder}/media/music";
-        CovertArtPriority = "*.jpg, *.JPG, *.png, *.PNG, embedded";
-        AutoImportPlaylists = false;
-        EnableSharing = true;
-        # "LastFM.Enabled" = true;
-        # "LastFM.ApiKey" = config.sops.secrets.last-fm-key.path;
-        # "LastFM.Secret" = config.sops.secrets.last-fm-secret.path;
+    services = {
+      ## service
+      navidrome = {
+        enable = true;
+        settings = {
+          Address = "0.0.0.0";
+          Port = 4533;
+          MusicFolder = "${config.mySystem.dataFolder}/media/music";
+          CovertArtPriority = "*.jpg, *.JPG, *.png, *.PNG, embedded";
+          AutoImportPlaylists = false;
+          EnableSharing = true;
+          # "LastFM.Enabled" = true;
+          # "LastFM.ApiKey" = config.sops.secrets.last-fm-key.path;
+          # "LastFM.Secret" = config.sops.secrets.last-fm-secret.path;
+        };
       };
+
+      ### Ingress
+      nginx.virtualHosts = config.lib.mySystem.mkVhost {
+        inherit app port;
+        host = url;
+      };
+
+      restic.backups = mkIf cfg.backup (config.lib.mySystem.mkRestic
+        {
+          inherit app user;
+          paths = [ appFolder ];
+          inherit appFolder;
+        });
     };
 
 
@@ -121,12 +136,6 @@ in
       }
     ];
 
-    ### Ingress
-    services.nginx.virtualHosts = config.lib.mySystem.mkVhost {
-      inherit app port;
-      host = url;
-    };
-
     ### firewall config
 
     # networking.firewall = mkIf cfg.openFirewall {
@@ -139,13 +148,6 @@ in
       (mkIf (!cfg.backup && config.mySystem.purpose != "Development")
         "WARNING: Backups for ${app} are disabled!")
     ];
-
-    services.restic.backups = mkIf cfg.backup (config.lib.mySystem.mkRestic
-      {
-        inherit app user;
-        paths = [ appFolder ];
-        inherit appFolder;
-      });
 
 
     # services.postgresqlBackup = {

@@ -26,7 +26,6 @@ let
   hostVAM = "vmalert" + (if cfg.dev then "-dev" else "");
   urlVAM = "${hostVAM}.${config.networking.domain}";
 
-
 in
 {
   options.mySystem.${category}.${app} =
@@ -63,9 +62,6 @@ in
           description = "Enable backups";
           default = true;
         };
-
-
-
     };
 
   config = mkIf cfg.enable {
@@ -86,7 +82,6 @@ in
     users.users.izzy.extraGroups = [ group ];
     users.users.cassie.extraGroups = [ group ];
 
-
     # Folder perms - only for containers
     # systemd.tmpfiles.rules = [
     # "d ${appFolder}/ 0750 ${user} ${group} -"
@@ -96,55 +91,72 @@ in
       directories = [{ directory = appFolder; }];
     };
 
-
-    ## service
-    services.victoriametrics = {
-      enable = true;
-      retentionPeriod = "12";
-    };
-
-    services.vmalert = {
-      enable = true;
-      settings = {
-        "datasource.url" = "http://localhost:${builtins.toString port}";
-        "notifier.url" = [ "http://localhost:${builtins.toString portAM}" ];
+    services = {
+      ## service
+      victoriametrics = {
+        enable = true;
+        retentionPeriod = "12";
       };
-      rules = {
-        groups = [{
-          name = "alerting-rules";
-          rules = import ./alert-rules.nix { inherit lib; };
-        }];
-      };
-    };
 
-    services.prometheus.alertmanager = {
-      enable = true;
-      webExternalUrl = "https://alertmanager.${config.networking.domain}";
-      configuration = {
-        route = {
-          receiver = "ntfy";
-          # One notification per (kind of problem, box), and long enough waits
-          # that a deploy's restart churn settles into one message.
-          group_by = [ "alertname" "instance" ];
-          group_wait = "5m";
-          group_interval = "5m";
-          # Unfixed problems re-notify daily: a failed unit nobody fixed is still
-          # broken tomorrow.
-          repeat_interval = "24h";
+      vmalert = {
+        enable = true;
+        settings = {
+          "datasource.url" = "http://localhost:${builtins.toString port}";
+          "notifier.url" = [ "http://localhost:${builtins.toString portAM}" ];
         };
-        receivers = [
-          {
-            name = "ntfy";
-            # The bridge renders the notification (title, priority from `severity`,
-            # resolved handling); raw webhook JSON at ntfy would be an unreadable blob.
-            webhook_configs = [{
-              url = "http://127.0.0.1:${toString config.mySystem.services.ntfy-alertmanager.listenPort}/";
-              send_resolved = true;
-            }];
-          }
-        ];
+        rules = {
+          groups = [{
+            name = "alerting-rules";
+            rules = import ./alert-rules.nix { inherit lib; };
+          }];
+        };
       };
+
+      prometheus.alertmanager = {
+        enable = true;
+        webExternalUrl = "https://alertmanager.${config.networking.domain}";
+        configuration = {
+          route = {
+            receiver = "ntfy";
+            # One notification per (kind of problem, box), and long enough waits
+            # that a deploy's restart churn settles into one message.
+            group_by = [ "alertname" "instance" ];
+            group_wait = "5m";
+            group_interval = "5m";
+            # Unfixed problems re-notify daily: a failed unit nobody fixed is still
+            # broken tomorrow.
+            repeat_interval = "24h";
+          };
+          receivers = [
+            {
+              name = "ntfy";
+              # The bridge renders the notification (title, priority from `severity`,
+              # resolved handling); raw webhook JSON at ntfy would be an unreadable blob.
+              webhook_configs = [{
+                url = "http://127.0.0.1:${toString config.mySystem.services.ntfy-alertmanager.listenPort}/";
+                send_resolved = true;
+              }];
+            }
+          ];
+        };
+      };
+
+      ### Ingress
+      # victoriametrics
+      nginx.virtualHosts =
+        config.lib.mySystem.mkVhost { inherit app port; host = url; }
+        // config.lib.mySystem.mkVhost { app = "alertmanager"; host = urlAM; port = portAM; }
+        // config.lib.mySystem.mkVhost { app = "vmalert"; host = urlVAM; port = portVAM; websockets = true; }
+      ;
+
+      restic.backups = mkIf cfg.backup (config.lib.mySystem.mkRestic
+        {
+          inherit app user;
+          paths = [ appFolder ];
+          inherit appFolder;
+        });
     };
+
     # homepage integration
     mySystem.services.homepage.infrastructure = mkIf cfg.addToHomepage [
       {
@@ -167,17 +179,6 @@ in
       }
     ];
 
-    ### Ingress
-    # victoriametrics
-    services.nginx.virtualHosts =
-      config.lib.mySystem.mkVhost { inherit app port; host = url; }
-      // config.lib.mySystem.mkVhost { app = "alertmanager"; host = urlAM; port = portAM; }
-      // config.lib.mySystem.mkVhost { app = "vmalert"; host = urlVAM; port = portVAM; websockets = true; }
-    ;
-
-
-
-
     ### firewall config
 
     networking.firewall = {
@@ -191,19 +192,8 @@ in
         "WARNING: Backups for ${app} are disabled!")
     ];
 
-    services.restic.backups = mkIf cfg.backup (config.lib.mySystem.mkRestic
-      {
-        inherit app user;
-        paths = [ appFolder ];
-        inherit appFolder;
-      });
-
-
     # services.postgresqlBackup = {
     #   databases = [ app ];
     # };
-
-
-
   };
 }

@@ -23,14 +23,25 @@ in
 
   config = mkIf cfg.enable {
 
-    services.node-red = {
-      enable = true;
-    };
+    services = {
+      node-red = {
+        enable = true;
+      };
 
-    services.nginx.virtualHosts = config.lib.mySystem.mkVhost {
-      inherit app;
-      inherit (config.services.node-red) port;
-      websockets = true;
+      nginx.virtualHosts = config.lib.mySystem.mkVhost {
+        inherit app;
+        inherit (config.services.node-red) port;
+        websockets = true;
+      };
+
+      restic.backups = config.lib.mySystem.mkRestic
+        {
+          inherit app;
+          user = builtins.toString user;
+          excludePaths = [ "Backups" ];
+          paths = [ appFolder ];
+          inherit appFolder;
+        };
     };
 
     environment.persistence."${config.mySystem.persistentFolder}" = lib.mkIf config.mySystem.system.impermanence.enable {
@@ -57,15 +68,6 @@ in
       interval = "1m";
       conditions = [ "[CONNECTED] == true" "[STATUS] == 200" "[RESPONSE_TIME] < 50" ];
     }];
-
-    services.restic.backups = config.lib.mySystem.mkRestic
-      {
-        inherit app;
-        user = builtins.toString user;
-        excludePaths = [ "Backups" ];
-        paths = [ appFolder ];
-        inherit appFolder;
-      };
 
 
 

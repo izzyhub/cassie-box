@@ -64,9 +64,35 @@ in
 
   config = mkIf cfg.enable {
 
-    # Host port registry (nixos/modules/nixos/ports.nix).
-    mySystem.ports.claims = {
-      "${app}-http" = { port = port; address = "127.0.0.1"; claimedBy = "${app} API"; };
+    mySystem = {
+      # Host port registry (nixos/modules/nixos/ports.nix).
+      ports.claims = {
+        "${app}-http" = { inherit port; address = "127.0.0.1"; claimedBy = "${app} API"; };
+      };
+
+      # homepage integration
+      services.homepage.infrastructure = mkIf cfg.addToHomepage [
+        {
+          ${app} = {
+            icon = "${app}.svg";
+            href = "https://${url}";
+            inherit description;
+          };
+        }
+      ];
+
+      ### gatus integration
+      services.gatus.monitors = mkIf cfg.monitor [
+        {
+          name = app;
+          group = "${category}";
+          # `/` is a 404 - this server is an API, not a site. /v2/languages is the
+          # cheapest endpoint that proves the JVM is actually up.
+          url = "https://${url}/v2/languages";
+          interval = "1m";
+          conditions = [ "[CONNECTED] == true" "[STATUS] == 200" "[RESPONSE_TIME] < 500" ];
+        }
+      ];
     };
 
     # No backups and no appdata folder on purpose: the upstream module runs
@@ -79,30 +105,6 @@ in
       public = false;
       inherit (cfg) allowOrigin jvmOptions;
     };
-
-    # homepage integration
-    mySystem.services.homepage.infrastructure = mkIf cfg.addToHomepage [
-      {
-        ${app} = {
-          icon = "${app}.svg";
-          href = "https://${url}";
-          inherit description;
-        };
-      }
-    ];
-
-    ### gatus integration
-    mySystem.services.gatus.monitors = mkIf cfg.monitor [
-      {
-        name = app;
-        group = "${category}";
-        # `/` is a 404 - this server is an API, not a site. /v2/languages is the
-        # cheapest endpoint that proves the JVM is actually up.
-        url = "https://${url}/v2/languages";
-        interval = "1m";
-        conditions = [ "[CONNECTED] == true" "[STATUS] == 200" "[RESPONSE_TIME] < 500" ];
-      }
-    ];
 
     ### Ingress
     services.nginx.virtualHosts = config.lib.mySystem.mkVhost {

@@ -113,50 +113,65 @@ in
       directories = [ appFolder ];
     };
 
-    ## service
-    services.kanidm = {
-      # withSecretProvisioning = patched build that lets provisioning SET oauth2 basic
-      # secrets + admin passwords (upstream only lets you read them back). Version must
-      # be explicit per the nixpkgs module.
-      package = pkgs.kanidm_1_11.withSecretProvisioning;
+    services = {
+      ## service
+      kanidm = {
+        # withSecretProvisioning = patched build that lets provisioning SET oauth2 basic
+        # secrets + admin passwords (upstream only lets you read them back). Version must
+        # be explicit per the nixpkgs module.
+        package = pkgs.kanidm_1_11.withSecretProvisioning;
 
-      client = {
-        enable = true;
-        settings.uri = "https://${url}";
-      };
+        client = {
+          enable = true;
+          settings.uri = "https://${url}";
+        };
 
-      server = {
-        enable = true;
-        settings = {
-          domain = url;
-          origin = "https://${url}";
-          bindaddress = "127.0.0.1:${toString port}";
-          # Trust X-Forwarded-For from nginx (loopback only). kanidm >= 1.4 config v2
-          # replaced the old `trust_x_forward_for = true` boolean with this table.
-          http_client_address_info."x-forward-for" = [ "127.0.0.1" ];
-          tls_chain = "${certDir}/fullchain.pem";
-          tls_key = "${certDir}/key.pem";
-          # nightly consistent dump of the db (the live sqlite must not be copied raw);
-          # restic (below) picks the directory up.
-          online_backup = {
-            path = backupFolder;
-            schedule = "00 22 * * *";
-            versions = 7;
+        server = {
+          enable = true;
+          settings = {
+            domain = url;
+            origin = "https://${url}";
+            bindaddress = "127.0.0.1:${toString port}";
+            # Trust X-Forwarded-For from nginx (loopback only). kanidm >= 1.4 config v2
+            # replaced the old `trust_x_forward_for = true` boolean with this table.
+            http_client_address_info."x-forward-for" = [ "127.0.0.1" ];
+            tls_chain = "${certDir}/fullchain.pem";
+            tls_key = "${certDir}/key.pem";
+            # nightly consistent dump of the db (the live sqlite must not be copied raw);
+            # restic (below) picks the directory up.
+            online_backup = {
+              path = backupFolder;
+              schedule = "00 22 * * *";
+              versions = 7;
+            };
           };
+        };
+
+        # Provisioning talks to https://localhost:8443 (module default) with cert checks
+        # relaxed — loopback only, so that's fine. It is authoritative for everything it
+        # declares; `autoRemove` (default true) also deletes things it created earlier that
+        # vanished from config.
+        provision = {
+          enable = true;
+          adminPasswordFile = config.sops.secrets."${category}/${app}/admin-password".path;
+          idmAdminPasswordFile = config.sops.secrets."${category}/${app}/idm-admin-password".path;
+          inherit (cfg) persons groups;
+          systems.oauth2 = cfg.oauth2;
         };
       };
 
-      # Provisioning talks to https://localhost:8443 (module default) with cert checks
-      # relaxed — loopback only, so that's fine. It is authoritative for everything it
-      # declares; `autoRemove` (default true) also deletes things it created earlier that
-      # vanished from config.
-      provision = {
-        enable = true;
-        adminPasswordFile = config.sops.secrets."${category}/${app}/admin-password".path;
-        idmAdminPasswordFile = config.sops.secrets."${category}/${app}/idm-admin-password".path;
-        inherit (cfg) persons groups;
-        systems.oauth2 = cfg.oauth2;
+      ### Ingress — https upstream (kanidmd's own TLS, real wildcard cert so no verify-off needed)
+      nginx.virtualHosts = config.lib.mySystem.mkVhost {
+        inherit app port;
+        inherit (cfg) subdomain;
+        scheme = "https";
+        websockets = true;
       };
+
+      restic.backups = mkIf cfg.backups (config.lib.mySystem.mkRestic {
+        inherit app user appFolder;
+        paths = [ backupFolder ];
+      });
     };
 
     # homepage integration
@@ -181,23 +196,10 @@ in
       }
     ];
 
-    ### Ingress — https upstream (kanidmd's own TLS, real wildcard cert so no verify-off needed)
-    services.nginx.virtualHosts = config.lib.mySystem.mkVhost {
-      inherit app port;
-      inherit (cfg) subdomain;
-      scheme = "https";
-      websockets = true;
-    };
-
     ### backups
     warnings = [
       (mkIf (!cfg.backups && config.mySystem.purpose != "Development")
         "WARNING: Backups for ${app} are disabled!")
     ];
-
-    services.restic.backups = mkIf cfg.backups (config.lib.mySystem.mkRestic {
-      inherit app user appFolder;
-      paths = [ backupFolder ];
-    });
   };
 }

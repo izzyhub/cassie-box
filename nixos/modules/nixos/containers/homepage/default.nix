@@ -147,60 +147,63 @@ in
 
   config = mkIf cfg.enable {
 
-    # homepage secrets
-    # ensure you dont have whitespace around your ='s!
-    # ex: HOMEPAGE_VAR_CLOUDFLARE_TUNNEL_API=supersecretlol
-    sops.secrets."services/homepage/env" = {
-      # configure secret for forwarding rules
-      sopsFile = ./secrets.sops.yaml;
-      owner = "kah";
-      group = "kah";
-      restartUnits = [ "podman-${app}.service" ];
-    };
+    sops = {
+      secrets = {
+        # homepage secrets
+        # ensure you dont have whitespace around your ='s!
+        # ex: HOMEPAGE_VAR_CLOUDFLARE_TUNNEL_API=supersecretlol
+        "services/homepage/env" = {
+          # configure secret for forwarding rules
+          sopsFile = ./secrets.sops.yaml;
+          owner = "kah";
+          group = "kah";
+          restartUnits = [ "podman-${app}.service" ];
+        };
 
-    # api secrets from other apps
-    sops.secrets."services/sonarr/env" = {
-      # configure secret for forwarding rules
-      sopsFile = ../../services/sonarr/secrets.sops.yaml;
-      owner = "kah";
-      group = "kah";
-      restartUnits = [ "podman-${app}.service" ];
+        # api secrets from other apps
+        "services/sonarr/env" = {
+          # configure secret for forwarding rules
+          sopsFile = ../../services/sonarr/secrets.sops.yaml;
+          owner = "kah";
+          group = "kah";
+          restartUnits = [ "podman-${app}.service" ];
+        };
+        "services/radarr/env" = {
+          # configure secret for forwarding rules
+          sopsFile = ../../services/radarr/secrets.sops.yaml;
+          owner = "kah";
+          group = "kah";
+          restartUnits = [ "podman-${app}.service" ];
+        };
+        # "services/lidarr/env" = {
+        #   # configure secret for forwarding rules
+        #   sopsFile = ../../services/lidarr/secrets.sops.yaml;
+        #   owner = "kah";
+        #   group = "kah";
+        #   restartUnits = [ "podman-${app}.service" ];
+        # };
+        # "services/readarr/env" = {
+        #   # configure secret for forwarding rules
+        #   sopsFile = ../../services/readarr/secrets.sops.yaml;
+        #   owner = "kah";
+        #   group = "kah";
+        #   restartUnits = [ "podman-${app}.service" ];
+        # };
+        "services/prowlarr/env" = {
+          # configure secret for forwarding rules
+          sopsFile = ../../services/prowlarr/secrets.sops.yaml;
+          owner = "kah";
+          group = "kah";
+          restartUnits = [ "podman-${app}.service" ];
+        };
+        "services/adguardhome/env" = {
+          sopsFile = ../../services/adguardhome/secrets.sops.yaml;
+          owner = "kah";
+          group = "kah";
+          restartUnits = [ "podman-${app}.service" ];
+        };
+      };
     };
-    sops.secrets."services/radarr/env" = {
-      # configure secret for forwarding rules
-      sopsFile = ../../services/radarr/secrets.sops.yaml;
-      owner = "kah";
-      group = "kah";
-      restartUnits = [ "podman-${app}.service" ];
-    };
-    # sops.secrets."services/lidarr/env" = {
-    #   # configure secret for forwarding rules
-    #   sopsFile = ../../services/lidarr/secrets.sops.yaml;
-    #   owner = "kah";
-    #   group = "kah";
-    #   restartUnits = [ "podman-${app}.service" ];
-    # };
-    # sops.secrets."services/readarr/env" = {
-    #   # configure secret for forwarding rules
-    #   sopsFile = ../../services/readarr/secrets.sops.yaml;
-    #   owner = "kah";
-    #   group = "kah";
-    #   restartUnits = [ "podman-${app}.service" ];
-    # };
-    sops.secrets."services/prowlarr/env" = {
-      # configure secret for forwarding rules
-      sopsFile = ../../services/prowlarr/secrets.sops.yaml;
-      owner = "kah";
-      group = "kah";
-      restartUnits = [ "podman-${app}.service" ];
-    };
-    sops.secrets."services/adguardhome/env" = {
-      sopsFile = ../../services/adguardhome/secrets.sops.yaml;
-      owner = "kah";
-      group = "kah";
-      restartUnits = [ "podman-${app}.service" ];
-    };
-
 
     virtualisation.oci-containers.containers.${app} = {
       image = "${image}";
@@ -253,7 +256,6 @@ in
       inherit app port;
     };
 
-
     mySystem.services.gatus.monitors = [{
       name = app;
       group = "infrastructure";
@@ -261,7 +263,5 @@ in
       interval = "1m";
       conditions = [ "[CONNECTED] == true" "[STATUS] == 200" "[RESPONSE_TIME] < 50" ];
     }];
-
-
   };
 }

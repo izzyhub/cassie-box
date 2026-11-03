@@ -63,27 +63,29 @@ let
   '';
 in
 {
-  systemd.services.net-diag = {
-    description = "Dump network state for debugging";
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = netDiag;
+  systemd = {
+    services.net-diag = {
+      description = "Dump network state for debugging";
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = netDiag;
+      };
     };
-  };
 
-  systemd.timers.net-diag = {
-    description = "Periodically dump network state for debugging";
-    wantedBy = [ "timers.target" ];
-    timerConfig = {
-      # Start early enough to catch the drop-off, which happens seconds in.
-      OnBootSec = "2s";
-      OnUnitActiveSec = "30s";
-      AccuracySec = "1s";
+    timers.net-diag = {
+      description = "Periodically dump network state for debugging";
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        # Start early enough to catch the drop-off, which happens seconds in.
+        OnBootSec = "2s";
+        OnUnitActiveSec = "30s";
+        AccuracySec = "1s";
+      };
     };
-  };
 
-  # Keep the debug log from growing without bound.
-  systemd.tmpfiles.rules = [
-    "f /var/log/net-diag.log 0644 root root 7d"
-  ];
+    # Keep the debug log from growing without bound.
+    tmpfiles.rules = [
+      "f /var/log/net-diag.log 0644 root root 7d"
+    ];
+  };
 }

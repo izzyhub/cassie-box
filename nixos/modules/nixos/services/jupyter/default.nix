@@ -121,9 +121,34 @@ in
       directories = [{ directory = appFolder; inherit user; inherit group; mode = "2775"; }];
     };
 
-    # Host port registry (nixos/modules/nixos/ports.nix).
-    mySystem.ports.claims = {
-      "${app}-http" = { port = port; address = "127.0.0.1"; claimedBy = "${app} notebook server"; };
+    mySystem = {
+      # Host port registry (nixos/modules/nixos/ports.nix).
+      ports.claims = {
+        "${app}-http" = { inherit port; address = "127.0.0.1"; claimedBy = "${app} notebook server"; };
+      };
+
+      # homepage integration
+      services.homepage.infrastructure = mkIf cfg.addToHomepage [
+        {
+          ${app} = {
+            icon = "jupyter.svg";
+            href = "https://${url}";
+            inherit description;
+          };
+        }
+      ];
+
+      ### gatus integration
+      services.gatus.monitors = mkIf cfg.monitor [
+        {
+          name = app;
+          group = "${category}";
+          url = "https://${url}";
+          interval = "1m";
+          # Lab's first paint is well past the repo's usual 50ms budget.
+          conditions = [ "[CONNECTED] == true" "[STATUS] == 200" "[RESPONSE_TIME] < 500" ];
+        }
+      ];
     };
 
     # Shared notebook root, setgid so anything written here stays readable to
@@ -132,83 +157,72 @@ in
       "d ${appFolder} 2775 ${user} ${group} -"
     ];
 
-    services.jupyter = {
-      enable = true;
-      inherit user group port;
-      ip = "127.0.0.1";
-      # `jupyter lab` is not in the `notebook` package the module defaults to.
-      package = pkgs.python3Packages.jupyterlab;
-      command = "jupyter lab";
-      notebookDir = appFolder;
-      password = cfg.passwordHash;
-      # jupytext keeps notebooks diffable as plain .py/.qmd alongside the .ipynb.
-      extraPackages = [ pkgs.python3Packages.jupytext ];
+    services = {
+      jupyter = {
+        enable = true;
+        inherit user group port;
+        ip = "127.0.0.1";
+        # `jupyter lab` is not in the `notebook` package the module defaults to.
+        package = pkgs.python3Packages.jupyterlab;
+        command = "jupyter lab";
+        notebookDir = appFolder;
+        password = cfg.passwordHash;
+        # jupytext keeps notebooks diffable as plain .py/.qmd alongside the .ipynb.
+        extraPackages = [ pkgs.python3Packages.jupytext ];
 
-      kernels = {
-        python3 = {
-          displayName = "Python 3 (stats)";
-          argv = [
-            "${pythonKernelEnv.interpreter}"
-            "-m"
-            "ipykernel_launcher"
-            "-f"
-            "{connection_file}"
-          ];
-          language = "python";
-        };
+        kernels = {
+          python3 = {
+            displayName = "Python 3 (stats)";
+            argv = [
+              "${pythonKernelEnv.interpreter}"
+              "-m"
+              "ipykernel_launcher"
+              "-f"
+              "{connection_file}"
+            ];
+            language = "python";
+          };
 
-        ir = {
-          displayName = "R";
-          # --no-echo is the post-R-4.0 spelling of the old --slave flag.
-          argv = [
-            "${rKernelEnv}/bin/R"
-            "--no-echo"
-            "-e"
-            "IRkernel::main()"
-            "--args"
-            "{connection_file}"
-          ];
-          language = "R";
+          ir = {
+            displayName = "R";
+            # --no-echo is the post-R-4.0 spelling of the old --slave flag.
+            argv = [
+              "${rKernelEnv}/bin/R"
+              "--no-echo"
+              "-e"
+              "IRkernel::main()"
+              "--args"
+              "{connection_file}"
+            ];
+            language = "R";
+          };
         };
       };
+
+      ### Ingress
+      nginx.virtualHosts = config.lib.mySystem.mkVhost {
+        inherit app port;
+        host = url;
+        # Kernel comms are websockets, and a long-running cell must not be cut
+        # off by the default 60s proxy read timeout.
+        websockets = true;
+        extraLocationConfig = ''
+          proxy_read_timeout 3600s;
+          proxy_send_timeout 3600s;
+          client_max_body_size 0;
+        '';
+      };
+
+      restic.backups = mkIf cfg.backup (config.lib.mySystem.mkRestic
+        {
+          inherit app user;
+          paths = [ appFolder ];
+          inherit appFolder;
+        });
     };
 
-    # homepage integration
-    mySystem.services.homepage.infrastructure = mkIf cfg.addToHomepage [
-      {
-        ${app} = {
-          icon = "jupyter.svg";
-          href = "https://${url}";
-          inherit description;
-        };
-      }
-    ];
 
-    ### gatus integration
-    mySystem.services.gatus.monitors = mkIf cfg.monitor [
-      {
-        name = app;
-        group = "${category}";
-        url = "https://${url}";
-        interval = "1m";
-        # Lab's first paint is well past the repo's usual 50ms budget.
-        conditions = [ "[CONNECTED] == true" "[STATUS] == 200" "[RESPONSE_TIME] < 500" ];
-      }
-    ];
 
-    ### Ingress
-    services.nginx.virtualHosts = config.lib.mySystem.mkVhost {
-      inherit app port;
-      host = url;
-      # Kernel comms are websockets, and a long-running cell must not be cut
-      # off by the default 60s proxy read timeout.
-      websockets = true;
-      extraLocationConfig = ''
-        proxy_read_timeout 3600s;
-        proxy_send_timeout 3600s;
-        client_max_body_size 0;
-      '';
-    };
 
     ### backups
     warnings = [
@@ -218,12 +232,6 @@ in
         "${app}: no passwordHash set - falling back to token auth. Run `journalctl -u jupyter -e | grep token` for the login URL.")
     ];
 
-    services.restic.backups = mkIf cfg.backup (config.lib.mySystem.mkRestic
-      {
-        inherit app user;
-        paths = [ appFolder ];
-        inherit appFolder;
-      });
 
   };
 }

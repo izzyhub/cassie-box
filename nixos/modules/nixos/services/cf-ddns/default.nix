@@ -73,9 +73,9 @@ in
 
     services.ddclient = {
       enable = true;
-      interval = cfg.interval;
+      inherit (cfg) interval;
       protocol = "cloudflare";
-      zone = cfg.zone;
+      inherit (cfg) zone;
       username = "token"; # Literal "token" for API token auth
       passwordFile = config.sops.secrets."${category}/${app}/token".path;
       domains = cfg.records;

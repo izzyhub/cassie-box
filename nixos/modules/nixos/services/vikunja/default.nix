@@ -76,34 +76,51 @@ in
     users = {
       groups.vikunja = { };
 
-      users.izzy.extraGroups = [ group ];
-      users.cassie.extraGroups = [ group ];
-      users."${user}" = {
-        inherit group;
-        createHome = false;
-        isSystemUser = true;
+      users = {
+        izzy.extraGroups = [ group ];
+        cassie.extraGroups = [ group ];
+        "${user}" = {
+          inherit group;
+          createHome = false;
+          isSystemUser = true;
+        };
       };
     };
 
-    ## service
-    services.vikunja = {
-      enable = true;
-      frontendHostname = url;
-      frontendScheme = "https";
-      # TODO add JWT secret
-      environmentFiles = [ config.sops.secrets."${category}/${app}/env".path ]; # TODO jwt and mailer
-      settings = {
-        service = {
-          # publicurl is derived upstream from frontendScheme/frontendHostname.
-          enablecaldav = true;
-          timezone = "America/New_York";
-        };
-        mailer = {
-          enabled = true;
-          # smtp deets set using ENV in secret
-        };
+    services = {
+      ## service
+      vikunja = {
+        enable = true;
+        frontendHostname = url;
+        frontendScheme = "https";
+        # TODO add JWT secret
+        environmentFiles = [ config.sops.secrets."${category}/${app}/env".path ]; # TODO jwt and mailer
+        settings = {
+          service = {
+            # publicurl is derived upstream from frontendScheme/frontendHostname.
+            enablecaldav = true;
+            timezone = "America/New_York";
+          };
+          mailer = {
+            enabled = true;
+            # smtp deets set using ENV in secret
+          };
 
+        };
       };
+
+      ### Ingress
+      nginx.virtualHosts = config.lib.mySystem.mkVhost {
+        inherit app port;
+        host = url;
+      };
+
+      restic.backups = mkIf cfg.backup (config.lib.mySystem.mkRestic
+        {
+          inherit app user;
+          paths = [ appFolder ];
+          inherit appFolder;
+        });
     };
 
     ## OR
@@ -138,12 +155,6 @@ in
       }
     ];
 
-    ### Ingress
-    services.nginx.virtualHosts = config.lib.mySystem.mkVhost {
-      inherit app port;
-      host = url;
-    };
-
     ### firewall config
 
     # networking.firewall = mkIf cfg.openFirewall {
@@ -156,13 +167,6 @@ in
       (mkIf (!cfg.backup && config.mySystem.purpose != "Development")
         "WARNING: Backups for ${app} are disabled!")
     ];
-
-    services.restic.backups = mkIf cfg.backup (config.lib.mySystem.mkRestic
-      {
-        inherit app user;
-        paths = [ appFolder ];
-        inherit appFolder;
-      });
 
 
     # services.postgresqlBackup = {

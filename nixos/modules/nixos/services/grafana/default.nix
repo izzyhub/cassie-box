@@ -67,7 +67,7 @@ in
     sops.secrets."${category}/${app}/secret_key" = {
       sopsFile = ./secrets.sops.yaml;
       owner = user;
-      group = group;
+      inherit group;
       restartUnits = [ "${app}.service" ];
     };
 
@@ -85,98 +85,112 @@ in
     };
 
 
-    ## service
-    services.grafana = {
+    services = {
+      ## service
+      grafana = {
 
-      enable = true;
-      declarativePlugins = with pkgs.grafanaPlugins; [
-        grafana-clock-panel
-      ];
-
-      settings = {
-        database.wal = true;
-
-        security.secret_key = "$__file{${config.sops.secrets."${category}/${app}/secret_key".path}}";
-
-        server = {
-          http_port = port;
-          http_addr = "127.0.0.1";
-          enable_gzip = true;
-          inherit (config.networking) domain;
-        };
-
-        analytics = {
-          check_for_updates = false;
-          feedback_links_enabled = false;
-          reporting_enabled = false;
-        };
-      };
-      provision = {
         enable = true;
-        datasources.settings = {
-          datasources = [
-            {
-              uid = "victoria-metrics";
-              name = "VictoriaMetrics";
-              type = "prometheus";
-              access = "proxy";
-              isDefault = true;
-              url = "http://localhost${config.services.victoriametrics.listenAddress}";
-            }
-          ];
+        declarativePlugins = with pkgs.grafanaPlugins; [
+          grafana-clock-panel
+        ];
+
+        settings = {
+          database.wal = true;
+
+          security.secret_key = "$__file{${config.sops.secrets."${category}/${app}/secret_key".path}}";
+
+          server = {
+            http_port = port;
+            http_addr = "127.0.0.1";
+            enable_gzip = true;
+            inherit (config.networking) domain;
+          };
+
+          analytics = {
+            check_for_updates = false;
+            feedback_links_enabled = false;
+            reporting_enabled = false;
+          };
         };
-        dashboards.settings.providers =
-          let
-            makeReadOnly = x: lib.pipe x [
-              builtins.readFile
-              builtins.fromJSON
-              (x: x // { editable = false; })
-              builtins.toJSON
-              (pkgs.writeText (builtins.baseNameOf x))
+        provision = {
+          enable = true;
+          datasources.settings = {
+            datasources = [
+              {
+                uid = "victoria-metrics";
+                name = "VictoriaMetrics";
+                type = "prometheus";
+                access = "proxy";
+                isDefault = true;
+                url = "http://localhost${config.services.victoriametrics.listenAddress}";
+              }
             ];
-          in
-          [
-            {
-              name = "PostgreSQL";
-              type = "file";
-              url = "https://grafana.com/api/dashboards/9628/revisions/7/download";
-              options.path = makeReadOnly ./dashboards/postgres.json;
-            }
-            {
-              name = "Node";
-              type = "file";
-              url = "https://raw.githubusercontent.com/rfmoz/grafana-dashboards/master/prometheus/node-exporter-full.json";
-              options.path = makeReadOnly ./dashboards/node.json;
-            }
-            {
-              name = "Nginx";
-              type = "file";
-              url = "https://raw.githubusercontent.com/nginxinc/nginx-prometheus-exporter/main/grafana/dashboard.json";
-              options.path = makeReadOnly ./dashboards/nginx.json;
-            }
-            {
-              name = "Redis";
-              type = "file";
-              url = "https://raw.githubusercontent.com/oliver006/redis_exporter/master/contrib/grafana_prometheus_redis_dashboard.json";
-              options.path = ./dashboards/redis.json;
-            }
-            {
-              name = "Gatus";
-              type = "file";
-              url = "https://github.com/TwiN/gatus/blob/master/.examples/docker-compose-grafana-prometheus/grafana/provisioning/dashboards/gatus.json";
-              options.path = ./dashboards/gatus.json;
-            }
-            {
-              name = "smartctl";
-              type = "file";
-              url = "https://grafana.com/api/dashboards/20204/revisions/1/download";
-              options.path = ./dashboards/smartctl.json;
-            }
-          ];
+          };
+          dashboards.settings.providers =
+            let
+              makeReadOnly = x: lib.pipe x [
+                builtins.readFile
+                builtins.fromJSON
+                (x: x // { editable = false; })
+                builtins.toJSON
+                (pkgs.writeText (builtins.baseNameOf x))
+              ];
+            in
+            [
+              {
+                name = "PostgreSQL";
+                type = "file";
+                url = "https://grafana.com/api/dashboards/9628/revisions/7/download";
+                options.path = makeReadOnly ./dashboards/postgres.json;
+              }
+              {
+                name = "Node";
+                type = "file";
+                url = "https://raw.githubusercontent.com/rfmoz/grafana-dashboards/master/prometheus/node-exporter-full.json";
+                options.path = makeReadOnly ./dashboards/node.json;
+              }
+              {
+                name = "Nginx";
+                type = "file";
+                url = "https://raw.githubusercontent.com/nginxinc/nginx-prometheus-exporter/main/grafana/dashboard.json";
+                options.path = makeReadOnly ./dashboards/nginx.json;
+              }
+              {
+                name = "Redis";
+                type = "file";
+                url = "https://raw.githubusercontent.com/oliver006/redis_exporter/master/contrib/grafana_prometheus_redis_dashboard.json";
+                options.path = ./dashboards/redis.json;
+              }
+              {
+                name = "Gatus";
+                type = "file";
+                url = "https://github.com/TwiN/gatus/blob/master/.examples/docker-compose-grafana-prometheus/grafana/provisioning/dashboards/gatus.json";
+                options.path = ./dashboards/gatus.json;
+              }
+              {
+                name = "smartctl";
+                type = "file";
+                url = "https://grafana.com/api/dashboards/20204/revisions/1/download";
+                options.path = ./dashboards/smartctl.json;
+              }
+            ];
+        };
       };
+
+      ### Ingress
+      nginx.virtualHosts = config.lib.mySystem.mkVhost {
+        inherit app port;
+        host = url;
+        websockets = true;
+      };
+
+      restic.backups = mkIf cfg.backup (config.lib.mySystem.mkRestic
+        {
+          inherit app user;
+          paths = [ appFolder ];
+          inherit appFolder;
+        });
     };
-
-
 
     # homepage integration
     mySystem.services.homepage.infrastructure = mkIf cfg.addToHomepage [
@@ -200,13 +214,6 @@ in
       }
     ];
 
-    ### Ingress
-    services.nginx.virtualHosts = config.lib.mySystem.mkVhost {
-      inherit app port;
-      host = url;
-      websockets = true;
-    };
-
     ### firewall config
 
     # networking.firewall = mkIf cfg.openFirewall {
@@ -219,13 +226,6 @@ in
       (mkIf (!cfg.backup && config.mySystem.purpose != "Development")
         "WARNING: Backups for ${app} are disabled!")
     ];
-
-    services.restic.backups = mkIf cfg.backup (config.lib.mySystem.mkRestic
-      {
-        inherit app user;
-        paths = [ appFolder ];
-        inherit appFolder;
-      });
 
 
     # services.postgresqlBackup = {

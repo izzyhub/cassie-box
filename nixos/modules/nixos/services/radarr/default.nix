@@ -85,14 +85,28 @@ in
     # (nixos/modules/services/misc/servarr/radarr.nix), with no option to set it.
     systemd.services.radarr.serviceConfig.UMask = lib.mkForce "0002";
 
-    ## service
-    services.radarr = {
-      enable = true;
-      dataDir = "/var/lib/${app}";
-      inherit user group;
-      package = pkgs.radarr;
-    };
+    services = {
+      ## service
+      radarr = {
+        enable = true;
+        dataDir = "/var/lib/${app}";
+        inherit user group;
+        package = pkgs.radarr;
+      };
 
+      ### Ingress
+      nginx.virtualHosts = config.lib.mySystem.mkVhost {
+        inherit app port;
+        host = url;
+      };
+
+      restic.backups = mkIf cfg.backup (config.lib.mySystem.mkRestic
+        {
+          inherit app user;
+          paths = [ appFolder ];
+          inherit appFolder;
+        });
+    };
 
     mySystem.services.homepage.media = mkIf cfg.addToHomepage [
       {
@@ -122,12 +136,6 @@ in
       }
     ];
 
-    ### Ingress
-    services.nginx.virtualHosts = config.lib.mySystem.mkVhost {
-      inherit app port;
-      host = url;
-    };
-
     ### firewall config
 
     # networking.firewall = mkIf cfg.openFirewall {
@@ -140,13 +148,6 @@ in
       (mkIf (!cfg.backup && config.mySystem.purpose != "Development")
         "WARNING: Backups for ${app} are disabled!")
     ];
-
-    services.restic.backups = mkIf cfg.backup (config.lib.mySystem.mkRestic
-      {
-        inherit app user;
-        paths = [ appFolder ];
-        inherit appFolder;
-      });
 
 
     # services.postgresqlBackup = {

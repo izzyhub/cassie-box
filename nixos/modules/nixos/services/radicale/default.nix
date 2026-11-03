@@ -75,20 +75,36 @@ in
       directories = [ "/var/lib/radicale/" ];
     };
 
-    ## service
-    services.radicale = {
-      enable = true;
-      settings = {
-        server.hosts = [ "0.0.0.0:${builtins.toString port}" ];
-        auth = {
-          type = "htpasswd";
-          htpasswd_filename = config.sops.secrets."${category}/${app}/htpasswd".path;
-          htpasswd_encryption = "plain";
-          realm = "Radicale - Password Required";
-        };
-        storage.filesystem_folder = "/var/lib/radicale/collections"; # TODO impermance/move?
+    services = {
+      ## service
+      radicale = {
+        enable = true;
+        settings = {
+          server.hosts = [ "0.0.0.0:${builtins.toString port}" ];
+          auth = {
+            type = "htpasswd";
+            htpasswd_filename = config.sops.secrets."${category}/${app}/htpasswd".path;
+            htpasswd_encryption = "plain";
+            realm = "Radicale - Password Required";
+          };
+          storage.filesystem_folder = "/var/lib/radicale/collections"; # TODO impermance/move?
 
+        };
       };
+
+      ### Ingress
+      nginx.virtualHosts = config.lib.mySystem.mkVhost {
+        inherit app port;
+        host = url;
+      };
+
+      restic.backups = mkIf cfg.backups (config.lib.mySystem.mkRestic
+        {
+          inherit app user;
+          paths = [ appFolder ];
+          inherit appFolder;
+
+        });
     };
 
     # homepage integration
@@ -113,12 +129,6 @@ in
       }
     ];
 
-    ### Ingress
-    services.nginx.virtualHosts = config.lib.mySystem.mkVhost {
-      inherit app port;
-      host = url;
-    };
-
     ### firewall config
 
     # networking.firewall = mkIf cfg.openFirewall {
@@ -131,14 +141,6 @@ in
       (mkIf (!cfg.backups && config.mySystem.purpose != "Development")
         "WARNING: Backups for ${app} are disabled!")
     ];
-
-    services.restic.backups = mkIf cfg.backups (config.lib.mySystem.mkRestic
-      {
-        inherit app user;
-        paths = [ appFolder ];
-        inherit appFolder;
-
-      });
 
 
   };

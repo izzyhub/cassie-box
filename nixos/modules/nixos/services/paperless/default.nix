@@ -74,13 +74,82 @@ in
     users.users.cassie.extraGroups = [ group ];
     users.users.izzy.extraGroups = [ group ];
 
-    # ensure postgresql setup
-    services.postgresql = {
-      ensureDatabases = [ app ];
-      ensureUsers = [{
-        name = app;
-        ensureDBOwnership = true;
-      }];
+    services = {
+      # ensure postgresql setup
+      postgresql = {
+        ensureDatabases = [ app ];
+        ensureUsers = [{
+          name = app;
+          ensureDBOwnership = true;
+        }];
+      };
+
+      ## service
+      paperless = {
+        enable = true;
+        dataDir = "/var/lib/paperless";
+        mediaDir = "${dataFolder}/documents/paperless/media";
+        consumptionDir = "${dataFolder}/documents/paperless/inbound";
+        consumptionDirIsPublic = true;
+        port = 8000;
+        address = "127.0.0.1";
+        passwordFile = config.sops.secrets."${category}/${app}/passwordFile".path;
+        settings = {
+          PAPERLESS_OCR_LANGUAGE = "eng";
+          PAPERLESS_CONSUMER_POLLING = "60";
+          PAPERLESS_CONSUMER_RECURSIVE = "true";
+          PAPERLESS_CONSUMER_SUBDIRS_AS_TAGS = "true";
+          # PAPERLESS_DBENGINE = "postgresql";
+          # PAPERLESS_DBHOST = "/run/postgresql";
+          HOME = "/tmp"; # Prevent GNUPG home dir error
+          PAPERLESS_TIKA_ENABLED = true;
+          PAPERLESS_TIKA_ENDPOINT = "http://127.0.0.1:${tikaPort}";
+          PAPERLESS_TIKA_GOTENBERG_ENDPOINT = "http://127.0.0.1:${gotenbergPort}";
+        };
+      };
+
+      prometheus.exporters.redis = {
+        enable = true;
+        port = 10394;
+      };
+
+      vmagent = {
+        enable = true;
+        remoteWrite.url = "http://127.0.0.1:8428/api/v1/write";
+        extraArgs = lib.mkForce [ "-remoteWrite.label=instance=${config.networking.hostName}" ];
+        prometheusConfig = {
+          scrape_configs = [
+            {
+              job_name = "redis";
+              # scrape_timeout = "40s";
+              static_configs = [
+                {
+                  targets = [ "http://localhost:10394" ];
+
+                }
+              ];
+            }
+          ];
+        };
+      };
+
+      ### Ingress
+      nginx.virtualHosts = config.lib.mySystem.mkVhost {
+        inherit app port;
+        host = url;
+        maxBodySize = "256m";
+      };
+
+      restic.backups = mkIf cfg.backup (config.lib.mySystem.mkRestic
+        {
+          inherit app user;
+          paths = [ appFolder ];
+          inherit appFolder;
+        });
+
+      postgresqlBackup = {
+        databases = [ app ];
+      };
     };
 
     # systemd.services.podman-rxresume={
@@ -101,30 +170,6 @@ in
         { directory = "/var/lib/redis-paperless"; }];
     };
 
-
-    ## service
-    services.paperless = {
-      enable = true;
-      dataDir = "/var/lib/paperless";
-      mediaDir = "${dataFolder}/documents/paperless/media";
-      consumptionDir = "${dataFolder}/documents/paperless/inbound";
-      consumptionDirIsPublic = true;
-      port = 8000;
-      address = "127.0.0.1";
-      passwordFile = config.sops.secrets."${category}/${app}/passwordFile".path;
-      settings = {
-        PAPERLESS_OCR_LANGUAGE = "eng";
-        PAPERLESS_CONSUMER_POLLING = "60";
-        PAPERLESS_CONSUMER_RECURSIVE = "true";
-        PAPERLESS_CONSUMER_SUBDIRS_AS_TAGS = "true";
-        # PAPERLESS_DBENGINE = "postgresql";
-        # PAPERLESS_DBHOST = "/run/postgresql";
-        HOME = "/tmp"; # Prevent GNUPG home dir error
-        PAPERLESS_TIKA_ENABLED = true;
-        PAPERLESS_TIKA_ENDPOINT = "http://127.0.0.1:${tikaPort}";
-        PAPERLESS_TIKA_GOTENBERG_ENDPOINT = "http://127.0.0.1:${gotenbergPort}";
-      };
-    };
     # for word/etc conversions
     virtualisation.oci-containers.containers = {
       gotenberg = {
@@ -142,35 +187,6 @@ in
         ];
       };
     };
-
-
-
-    services.prometheus.exporters.redis = {
-      enable = true;
-      port = 10394;
-    };
-
-    services.vmagent = {
-      enable = true;
-      remoteWrite.url = "http://127.0.0.1:8428/api/v1/write";
-      extraArgs = lib.mkForce [ "-remoteWrite.label=instance=${config.networking.hostName}" ];
-      prometheusConfig = {
-        scrape_configs = [
-          {
-            job_name = "redis";
-            # scrape_timeout = "40s";
-            static_configs = [
-              {
-                targets = [ "http://localhost:10394" ];
-
-              }
-            ];
-          }
-        ];
-      };
-    };
-
-
 
     # homepage integration
     mySystem.services.homepage.infrastructure = mkIf cfg.addToHomepage [
@@ -199,13 +215,6 @@ in
       }
     ];
 
-    ### Ingress
-    services.nginx.virtualHosts = config.lib.mySystem.mkVhost {
-      inherit app port;
-      host = url;
-      maxBodySize = "256m";
-    };
-
     ### firewall config
 
     # networking.firewall = mkIf cfg.openFirewall {
@@ -220,18 +229,6 @@ in
       # (mkIf (!config.services.postgresql.enable)
       #   "WARNING: Postgres is not enabled on host for ${app}!")
     ];
-
-    services.restic.backups = mkIf cfg.backup (config.lib.mySystem.mkRestic
-      {
-        inherit app user;
-        paths = [ appFolder ];
-        inherit appFolder;
-      });
-
-
-    services.postgresqlBackup = {
-      databases = [ app ];
-    };
 
 
 

@@ -75,11 +75,26 @@ in
       };
 
 
-      ## service
-      services.readarr = {
-        enable = true;
-        dataDir = appFolder;
-        inherit user group;
+      services = {
+        ## service
+        readarr = {
+          enable = true;
+          dataDir = appFolder;
+          inherit user group;
+        };
+
+        ### Ingress
+        nginx.virtualHosts = config.lib.mySystem.mkVhost {
+          inherit app port;
+          host = url;
+        };
+
+        restic.backups = mkIf cfg.backup (config.lib.mySystem.mkRestic
+          {
+            inherit app user;
+            paths = [ appFolder ];
+            inherit appFolder;
+          });
       };
 
 
@@ -106,24 +121,11 @@ in
         }
       ];
 
-      ### Ingress
-      services.nginx.virtualHosts = config.lib.mySystem.mkVhost {
-        inherit app port;
-        host = url;
-      };
-
       ### backups
       warnings = [
         (mkIf (!cfg.backup && config.mySystem.purpose != "Development")
           "WARNING: Backups for ${app} are disabled!")
       ];
-
-      services.restic.backups = mkIf cfg.backup (config.lib.mySystem.mkRestic
-        {
-          inherit app user;
-          paths = [ appFolder ];
-          inherit appFolder;
-        });
 
     };
 }

@@ -70,7 +70,6 @@ in
     users.users.cassie.extraGroups = [ group ];
     users.users.izzy.extraGroups = [ group ];
 
-
     # Folder perms - only for containers
     # systemd.tmpfiles.rules = [
     # "d ${appFolder}/ 0750 ${user} ${group} -"
@@ -80,18 +79,51 @@ in
       directories = [{ directory = appFolder; inherit user; inherit group; mode = "750"; }];
     };
 
-
     ## service
 
+    services = {
+      minio = {
+        enable = true;
+        listenAddress = "0.0.0.0:${builtins.toString s3port}";
+        consoleAddress = "0.0.0.0:${builtins.toString port}";
+        region = "us-east-1";
+        rootCredentialsFile = "${config.sops.secrets."${category}/${app}/env".path}";
+        dataDir = [ "${dataFolder}/minio" ];
+        configDir = "/var/lib/${app}";
+      };
 
-    services.minio = {
-      enable = true;
-      listenAddress = "0.0.0.0:${builtins.toString s3port}";
-      consoleAddress = "0.0.0.0:${builtins.toString port}";
-      region = "us-east-1";
-      rootCredentialsFile = "${config.sops.secrets."${category}/${app}/env".path}";
-      dataDir = [ "${dataFolder}/minio" ];
-      configDir = "/var/lib/${app}";
+      ### Ingress
+      nginx.virtualHosts.${url} = {
+        forceSSL = true;
+        useACMEHost = config.networking.domain;
+        locations."^~ /" = {
+          proxyPass = "http://127.0.0.1:${builtins.toString port}";
+          proxyWebsockets = true;
+        };
+        extraConfig = ''
+          # To allow special characters in headers
+          ignore_invalid_headers off;
+          # Allow any size file to be uploaded.
+          # Set to a value such as 1000m; to restrict file size to a specific value
+          client_max_body_size 0;
+          # To disable buffering
+          proxy_buffering off;
+        '';
+      };
+      nginx.virtualHosts."s3.${config.networking.domain}" = {
+        forceSSL = true;
+        useACMEHost = config.networking.domain;
+        locations."^~ /" = {
+          proxyPass = "http://127.0.0.1:${builtins.toString s3port}";
+        };
+      };
+
+      restic.backups = mkIf cfg.backup (config.lib.mySystem.mkRestic
+        {
+          inherit app user;
+          paths = [ appFolder ];
+          inherit appFolder;
+        });
     };
 
     systemd.services.minio = {
@@ -100,7 +132,6 @@ in
         MINIO_BROWSER_REDIRECT_URL = "https://minio.cassies.app";
       };
     };
-
 
     # homepage integration
     mySystem.services.homepage.infrastructure = mkIf cfg.addToHomepage [
@@ -124,33 +155,6 @@ in
       }
     ];
 
-    ### Ingress
-    services.nginx.virtualHosts.${url} = {
-      forceSSL = true;
-      useACMEHost = config.networking.domain;
-      locations."^~ /" = {
-        proxyPass = "http://127.0.0.1:${builtins.toString port}";
-        proxyWebsockets = true;
-      };
-      extraConfig = ''
-        # To allow special characters in headers
-        ignore_invalid_headers off;
-        # Allow any size file to be uploaded.
-        # Set to a value such as 1000m; to restrict file size to a specific value
-        client_max_body_size 0;
-        # To disable buffering
-        proxy_buffering off;
-      '';
-    };
-    services.nginx.virtualHosts."s3.${config.networking.domain}" = {
-      forceSSL = true;
-      useACMEHost = config.networking.domain;
-      locations."^~ /" = {
-        proxyPass = "http://127.0.0.1:${builtins.toString s3port}";
-      };
-    };
-
-
     ### firewall config
 
     networking.firewall.interfaces.wg0.allowedTCPPorts = [
@@ -164,19 +168,8 @@ in
         "WARNING: Backups for ${app} are disabled!")
     ];
 
-    services.restic.backups = mkIf cfg.backup (config.lib.mySystem.mkRestic
-      {
-        inherit app user;
-        paths = [ appFolder ];
-        inherit appFolder;
-      });
-
-
     # services.postgresqlBackup = {
     #   databases = [ app ];
     # };
-
-
-
   };
 }

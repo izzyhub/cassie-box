@@ -63,14 +63,39 @@ in
     users.users.izzy.extraGroups = [ group ];
     users.users.cassie.extraGroups = [ group ];
 
-    environment.persistence."${config.mySystem.persistentFolder}" = lib.mkIf config.mySystem.system.impermanence.enable {
-      directories = [{ directory = appFolder; user = "kah"; group = "kah"; mode = "750"; }];
+    environment = {
+      persistence."${config.mySystem.persistentFolder}" = lib.mkIf config.mySystem.system.impermanence.enable {
+        directories = [{ directory = appFolder; user = "kah"; group = "kah"; mode = "750"; }];
+      };
+      sessionVariables = { LIBVA_DRIVER_NAME = "iHD"; };
+
+      # Add Jellyfin packages
+      systemPackages = with pkgs; [
+        jellyfin
+        jellyfin-web
+        jellyfin-ffmpeg
+      ];
     };
 
-    services.jellyfin = {
-      enable = true;
-      dataDir = "${appFolder}";
-      inherit user group;
+    services = {
+      jellyfin = {
+        enable = true;
+        dataDir = "${appFolder}";
+        inherit user group;
+      };
+
+      ### Ingress
+      nginx.virtualHosts = config.lib.mySystem.mkVhost {
+        inherit app port;
+        host = url;
+      };
+
+      restic.backups = mkIf cfg.backup (config.lib.mySystem.mkRestic
+        {
+          inherit app user;
+          paths = [ appFolder ];
+          inherit appFolder;
+        });
     };
 
     mySystem.services.homepage.media = mkIf cfg.addToHomepage [
@@ -98,14 +123,6 @@ in
 
     # Set environment variables for VAAPI
     systemd.services.jellyfin.environment.LIBVA_DRIVER_NAME = "iHD";
-    environment.sessionVariables = { LIBVA_DRIVER_NAME = "iHD"; };
-
-    # Add Jellyfin packages
-    environment.systemPackages = with pkgs; [
-      jellyfin
-      jellyfin-web
-      jellyfin-ffmpeg
-    ];
 
     # Add Intro Skipper plugin support
     nixpkgs.overlays = [
@@ -125,24 +142,11 @@ in
         });
       })
     ];
-
-    ### Ingress
-    services.nginx.virtualHosts = config.lib.mySystem.mkVhost {
-      inherit app port;
-      host = url;
-    };
     ### backups
     warnings = [
       (mkIf (!cfg.backup && config.mySystem.purpose != "Development")
         "WARNING: Backups for ${app} are disabled!")
     ];
-
-    services.restic.backups = mkIf cfg.backup (config.lib.mySystem.mkRestic
-      {
-        inherit app user;
-        paths = [ appFolder ];
-        inherit appFolder;
-      });
 
     # Open firewall ports if enabled
     networking.firewall = {

@@ -210,51 +210,52 @@ in
       }
     ];
 
-    ### Ingress
-    services.nginx.virtualHosts = config.lib.mySystem.mkVhost {
-      inherit app port;
-      host = url;
-      websockets = true;
-      maxBodySize = "0";
-      longTimeouts = true;
-    };
-
-    ### firewall config
-
-    # networking.firewall = mkIf cfg.openFirewall {
-    #   allowedTCPPorts = [ port ];
-    #   allowedUDPPorts = [ port ];
-    # };
-
-    services.vmagent = {
-      prometheusConfig = {
-        scrape_configs = [
-          {
-            job_name = "immich";
-            # scrape_timeout = "40s";
-            static_configs = [
-              {
-                targets = [ "http://127.0.0.1:${builtins.toString port}" ];
-              }
-            ];
-          }
-        ];
+    services = {
+      ### Ingress
+      nginx.virtualHosts = config.lib.mySystem.mkVhost {
+        inherit app port;
+        host = url;
+        websockets = true;
+        maxBodySize = "0";
+        longTimeouts = true;
       };
-    };
 
+      ### firewall config
+
+      # networking.firewall = mkIf cfg.openFirewall {
+      #   allowedTCPPorts = [ port ];
+      #   allowedUDPPorts = [ port ];
+      # };
+
+      vmagent = {
+        prometheusConfig = {
+          scrape_configs = [
+            {
+              job_name = "immich";
+              # scrape_timeout = "40s";
+              static_configs = [
+                {
+                  targets = [ "http://127.0.0.1:${builtins.toString port}" ];
+                }
+              ];
+            }
+          ];
+        };
+      };
+
+      restic.backups = mkIf cfg.backup (config.lib.mySystem.mkRestic
+        {
+          inherit app user;
+          paths = [ appFolder ];
+          inherit appFolder;
+        });
+    };
 
     ### backups
     warnings = [
       (mkIf (!cfg.backup && config.mySystem.purpose != "Development")
         "WARNING: Backups for ${app} are disabled!")
     ];
-
-    services.restic.backups = mkIf cfg.backup (config.lib.mySystem.mkRestic
-      {
-        inherit app user;
-        paths = [ appFolder ];
-        inherit appFolder;
-      });
 
 
     # services.postgresqlBackup = {

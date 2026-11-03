@@ -37,72 +37,74 @@ with lib;
       inherit (config.users.users.kah) group;
     };
 
-    systemd.services."qbtools-tag" = mkJob "hourly" {
-      args = [
-        "tagging"
-        "--added-on"
-        "--expired"
-        "--last-activity"
-        "--sites"
-        "--unregistered"
-      ];
-    };
+    systemd.services = {
+      "qbtools-tag" = mkJob "hourly" {
+        args = [
+          "tagging"
+          "--added-on"
+          "--expired"
+          "--last-activity"
+          "--sites"
+          "--unregistered"
+        ];
+      };
 
-    systemd.services."qbtools-prune-orphaned" = mkJob "*-*-* 05:20:00" {
-      args = [
-        "prune"
-        "--exclude-category"
-        "manual"
-        "--exclude-category"
-        "lts"
-        "--exclude-category"
-        "uploads"
-        "--include-tag"
-        "unregistered"
-      ];
-    };
+      "qbtools-prune-orphaned" = mkJob "*-*-* 05:20:00" {
+        args = [
+          "prune"
+          "--exclude-category"
+          "manual"
+          "--exclude-category"
+          "lts"
+          "--exclude-category"
+          "uploads"
+          "--include-tag"
+          "unregistered"
+        ];
+      };
 
-    systemd.services."qbtools-prune-expired" = mkJob "*-*-* 05:10:00" {
-      args = [
-        "prune"
-        "--exclude-category"
-        "manual"
-        "--exclude-category"
-        "uploads"
-        "--exclude-category"
-        "lts"
-        "--include-tag"
-        "expired"
-        "--exclude-tag"
-        "activity:24h"
-        "--exclude-tag"
-        "permaseed"
-        "--exclude-tag"
-        "lts"
-        "--exclude-tag"
-        "site:myanonamouse"
-        "--exclude-tag"
-        "site:orpheus"
-        "--exclude-tag"
-        "site:redacted"
-        "--exclude-tag"
-        "site:beyond-hd"
-      ];
-    };
+      "qbtools-prune-expired" = mkJob "*-*-* 05:10:00" {
+        args = [
+          "prune"
+          "--exclude-category"
+          "manual"
+          "--exclude-category"
+          "uploads"
+          "--exclude-category"
+          "lts"
+          "--include-tag"
+          "expired"
+          "--exclude-tag"
+          "activity:24h"
+          "--exclude-tag"
+          "permaseed"
+          "--exclude-tag"
+          "lts"
+          "--exclude-tag"
+          "site:myanonamouse"
+          "--exclude-tag"
+          "site:orpheus"
+          "--exclude-tag"
+          "site:redacted"
+          "--exclude-tag"
+          "site:beyond-hd"
+        ];
+      };
 
-    # Deletes anything under qbittorrent's save path that it doesn't own, so the
-    # folder must be mounted at the same path qbittorrent reports it at.
-    systemd.services."qbtools-orphaned" = mkJob "daily" {
-      volumes = [ "${torrentsFolder}:${torrentsFolder}:rw" ];
-      args = [
-        "orphaned"
-        "--exclude-pattern"
-        "*_unpackerred"
-        "--exclude-pattern"
-        "*/manual/*"
-        "--exclude-pattern"
-        "*/uploads/*"
-      ];
+      # Deletes anything under qbittorrent's save path that it doesn't own, so the
+      # folder must be mounted at the same path qbittorrent reports it at.
+      "qbtools-orphaned" = mkJob "daily" {
+        volumes = [ "${torrentsFolder}:${torrentsFolder}:rw" ];
+        args = [
+          "orphaned"
+          "--exclude-pattern"
+          "*_unpackerred"
+          "--exclude-pattern"
+          "*/manual/*"
+          "--exclude-pattern"
+          "*/uploads/*"
+        ];
+      };
     };
 
   };

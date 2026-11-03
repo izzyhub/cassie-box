@@ -81,13 +81,44 @@ in
     # };
 
 
-    ## service
-    services.invidious = {
-      enable = true;
-      domain = "invidious.${config.networking.domain}";
-      package = pkgs.unstable.invidious;
-      inherit port;
-      settings.db.user = app;
+    services = {
+      ## service
+      invidious = {
+        enable = true;
+        domain = "invidious.${config.networking.domain}";
+        package = pkgs.unstable.invidious;
+        inherit port;
+        settings.db.user = app;
+      };
+
+      ### Ingress
+      nginx.virtualHosts = config.lib.mySystem.mkVhost {
+        inherit app port;
+        host = url;
+        websockets = true;
+      };
+
+      restic.backups = mkIf cfg.backup (config.lib.mySystem.mkRestic
+        {
+          inherit app user;
+          paths = [ appFolder ];
+          inherit appFolder;
+        });
+
+      postgresql = {
+
+        enable = true;
+        ensureUsers = [{
+          name = app;
+          ensureDBOwnership = true;
+        }];
+        ensureDatabases = [ app ];
+
+      };
+
+      postgresqlBackup = {
+        databases = [ app ];
+      };
     };
     systemd.services.invidious = {
       serviceConfig.RuntimeMaxSec = lib.mkForce "8h";
@@ -117,13 +148,6 @@ in
       }
     ];
 
-    ### Ingress
-    services.nginx.virtualHosts = config.lib.mySystem.mkVhost {
-      inherit app port;
-      host = url;
-      websockets = true;
-    };
-
     ### firewall config
 
     # networking.firewall = mkIf cfg.openFirewall {
@@ -136,28 +160,6 @@ in
       (mkIf (!cfg.backup && config.mySystem.purpose != "Development")
         "WARNING: Backups for ${app} are disabled!")
     ];
-
-    services.restic.backups = mkIf cfg.backup (config.lib.mySystem.mkRestic
-      {
-        inherit app user;
-        paths = [ appFolder ];
-        inherit appFolder;
-      });
-
-    services.postgresql = {
-
-      enable = true;
-      ensureUsers = [{
-        name = app;
-        ensureDBOwnership = true;
-      }];
-      ensureDatabases = [ app ];
-
-    };
-
-    services.postgresqlBackup = {
-      databases = [ app ];
-    };
 
 
 

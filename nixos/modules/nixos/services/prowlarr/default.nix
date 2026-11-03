@@ -53,9 +53,6 @@ in
           description = "Enable backups";
           default = true;
         };
-
-
-
     };
 
   config = mkIf cfg.enable {
@@ -74,13 +71,26 @@ in
       directories = [{ directory = appFolder; }];
     };
 
-    ## service
-    services.prowlarr = {
-      enable = true;
-      package = pkgs.prowlarr;
+    services = {
+      ## service
+      prowlarr = {
+        enable = true;
+        package = pkgs.prowlarr;
+      };
+
+      ### Ingress
+      nginx.virtualHosts = config.lib.mySystem.mkVhost {
+        inherit app port;
+        host = url;
+      };
+
+      restic.backups = mkIf cfg.backup (config.lib.mySystem.mkRestic
+        {
+          inherit app user;
+          paths = [ appFolder ];
+          inherit appFolder;
+        });
     };
-
-
 
     # homepage integration
     mySystem.services.homepage.infrastructure = mkIf cfg.addToHomepage [
@@ -104,12 +114,6 @@ in
       }
     ];
 
-    ### Ingress
-    services.nginx.virtualHosts = config.lib.mySystem.mkVhost {
-      inherit app port;
-      host = url;
-    };
-
     ### firewall config
 
     # networking.firewall = mkIf cfg.openFirewall {
@@ -123,12 +127,6 @@ in
         "WARNING: Backups for ${app} are disabled!")
     ];
 
-    services.restic.backups = mkIf cfg.backup (config.lib.mySystem.mkRestic
-      {
-        inherit app user;
-        paths = [ appFolder ];
-        inherit appFolder;
-      });
     # services.postgresqlBackup = {
     #   databases = [ app ];
     # };

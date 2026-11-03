@@ -19,73 +19,75 @@ in
 
   config = mkIf cfg.enable {
 
-    services.prometheus.exporters = {
-      node = {
+    services = {
+      prometheus.exporters = {
+        node = {
+          enable = true;
+          enabledCollectors = [
+            "diskstats"
+            "filesystem"
+            "loadavg"
+            "meminfo"
+            "netdev"
+            "stat"
+            "time"
+            "uname"
+            "systemd"
+          ];
+        };
+        smartctl = {
+          enable = true;
+        };
+
+
+      };
+
+      # ensure ports are open
+      # networking.firewall.allowedTCPPorts = mkIf cfg.enable [
+      #   config.services.prometheus.exporters.node.port
+      #   config.services.prometheus.exporters.smartctl.port
+      # ];
+
+      vmagent = {
         enable = true;
-        enabledCollectors = [
-          "diskstats"
-          "filesystem"
-          "loadavg"
-          "meminfo"
-          "netdev"
-          "stat"
-          "time"
-          "uname"
-          "systemd"
-        ];
+        remoteWrite.url = "http://127.0.0.1:8428/api/v1/write";
+        extraArgs = lib.mkForce [ "-remoteWrite.label=instance=${config.networking.hostName}" ];
+        prometheusConfig = {
+          scrape_configs = [
+            {
+              job_name = "node";
+              # scrape_timeout = "40s";
+              static_configs = [
+                {
+                  targets = [ "http://127.0.0.1:9100" ];
+                }
+              ];
+            }
+            {
+              job_name = "smartctl";
+              # scrape_timeout = "40s";
+              static_configs = [
+                {
+                  targets = [ "http://127.0.0.1:9633" ];
+                }
+              ];
+            }
+            {
+              job_name = "vmagent";
+              # scrape_interval = "10s";
+              static_configs = [
+                { targets = [ "127.0.0.1:8429" ]; }
+              ];
+            }
+          ];
+        };
       };
-      smartctl = {
-        enable = true;
+
+      nginx.virtualHosts = config.lib.mySystem.mkVhost {
+        app = "vmagent";
+        host = urlVmAgent;
+        port = portVmAgent;
       };
-
-
-    };
-
-    # ensure ports are open
-    # networking.firewall.allowedTCPPorts = mkIf cfg.enable [
-    #   config.services.prometheus.exporters.node.port
-    #   config.services.prometheus.exporters.smartctl.port
-    # ];
-
-    services.vmagent = {
-      enable = true;
-      remoteWrite.url = "http://127.0.0.1:8428/api/v1/write";
-      extraArgs = lib.mkForce [ "-remoteWrite.label=instance=${config.networking.hostName}" ];
-      prometheusConfig = {
-        scrape_configs = [
-          {
-            job_name = "node";
-            # scrape_timeout = "40s";
-            static_configs = [
-              {
-                targets = [ "http://127.0.0.1:9100" ];
-              }
-            ];
-          }
-          {
-            job_name = "smartctl";
-            # scrape_timeout = "40s";
-            static_configs = [
-              {
-                targets = [ "http://127.0.0.1:9633" ];
-              }
-            ];
-          }
-          {
-            job_name = "vmagent";
-            # scrape_interval = "10s";
-            static_configs = [
-              { targets = [ "127.0.0.1:8429" ]; }
-            ];
-          }
-        ];
-      };
-    };
-
-    services.nginx.virtualHosts = config.lib.mySystem.mkVhost {
-      app = "vmagent";
-      host = urlVmAgent;
-      port = portVmAgent;
     };
 
 

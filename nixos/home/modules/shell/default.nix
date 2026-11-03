@@ -9,8 +9,10 @@
 
   config = {
     # Only enable fish by default
-    myHome.shell.fish.enable = true;
-    myHome.shell.zsh.enable = false;
-    myHome.shell.starship.enable = true;
+    myHome.shell = {
+      fish.enable = true;
+      zsh.enable = false;
+      starship.enable = true;
+    };
   };
 }

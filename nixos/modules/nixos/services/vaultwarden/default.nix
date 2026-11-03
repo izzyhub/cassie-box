@@ -76,17 +76,41 @@ in
       directories = [{ directory = appFolder; inherit user; inherit group; mode = "750"; }];
     };
 
-    services.vaultwarden = {
-      enable = true;
-      #dataDir = "/var/lib/vaultwarden";
-      backupDir = backupFolder;
-      environmentFile = config.sops.secrets."${category}/${app}/env".path;
-      #inherit user group;
-      config = {
-        domain = "https://${url}";
-        rocketPort = port;
-        rocketAddress = "0.0.0.0"; # Listen on all interfaces
+    services = {
+      vaultwarden = {
+        enable = true;
+        #dataDir = "/var/lib/vaultwarden";
+        backupDir = backupFolder;
+        environmentFile = config.sops.secrets."${category}/${app}/env".path;
+        #inherit user group;
+        config = {
+          domain = "https://${url}";
+          rocketPort = port;
+          rocketAddress = "0.0.0.0"; # Listen on all interfaces
+        };
       };
+
+      ### Ingress
+      nginx.virtualHosts.${url} = {
+        forceSSL = true;
+        useACMEHost = config.networking.domain;
+        locations."^~ /" = {
+          proxyPass = "http://127.0.0.1:${builtins.toString port}";
+          proxyWebsockets = true;
+          extraConfig = ''
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+          '';
+        };
+      };
+
+      restic.backups = mkIf cfg.backup (config.lib.mySystem.mkRestic {
+        inherit app user;
+        paths = [ backupFolder ];
+        inherit appFolder;
+      });
     };
 
     # homepage integration
@@ -111,32 +135,10 @@ in
       }
     ];
 
-    ### Ingress
-    services.nginx.virtualHosts.${url} = {
-      forceSSL = true;
-      useACMEHost = config.networking.domain;
-      locations."^~ /" = {
-        proxyPass = "http://127.0.0.1:${builtins.toString port}";
-        proxyWebsockets = true;
-        extraConfig = ''
-          proxy_set_header Host $host;
-          proxy_set_header X-Real-IP $remote_addr;
-          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-          proxy_set_header X-Forwarded-Proto $scheme;
-        '';
-      };
-    };
-
     ### backups
     warnings = [
       (mkIf (!cfg.backup && config.mySystem.purpose != "Development")
         "WARNING: Backups for ${app} are disabled!")
     ];
-
-    services.restic.backups = mkIf cfg.backup (config.lib.mySystem.mkRestic {
-      inherit app user;
-      paths = [ backupFolder ];
-      inherit appFolder;
-    });
   };
 }

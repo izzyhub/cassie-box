@@ -6,9 +6,11 @@ with lib;
 {
   config = {
     # Create media group for data access
-    users.groups.media = { };
-    users.users.izzy.extraGroups = [ "media" ];
-    users.users.cassie.extraGroups = [ "media" ];
+    users = {
+      groups.media = { };
+      users.izzy.extraGroups = [ "media" ];
+      users.cassie.extraGroups = [ "media" ];
+    };
 
     # System-wide tmpfiles rules
     systemd.tmpfiles.rules = [

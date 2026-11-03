@@ -53,9 +53,6 @@ in
           description = "Enable backups";
           default = true;
         };
-
-
-
     };
 
   config = mkIf cfg.enable {
@@ -71,11 +68,26 @@ in
     users.users.cassie.extraGroups = [ group ];
     users.users.izzy.extraGroups = [ group ];
 
-    ## service
-    services.rss-bridge = {
-      enable = true;
-      config.system.enabled_bridges = [ "*" ];
-      virtualHost = "${url}";
+    services = {
+      ## service
+      rss-bridge = {
+        enable = true;
+        config.system.enabled_bridges = [ "*" ];
+        virtualHost = "${url}";
+      };
+
+      ### Ingress
+      nginx.virtualHosts.${url} = {
+        forceSSL = true;
+        useACMEHost = config.networking.domain;
+      };
+
+      restic.backups = mkIf cfg.backup (config.lib.mySystem.mkRestic
+        {
+          inherit app user;
+          paths = [ appFolder ];
+          inherit appFolder;
+        });
     };
 
     # homepage integration
@@ -100,12 +112,6 @@ in
       }
     ];
 
-    ### Ingress
-    services.nginx.virtualHosts.${url} = {
-      forceSSL = true;
-      useACMEHost = config.networking.domain;
-    };
-
     ### firewall config
 
     # networking.firewall = mkIf cfg.openFirewall {
@@ -119,19 +125,8 @@ in
         "WARNING: Backups for ${app} are disabled!")
     ];
 
-    services.restic.backups = mkIf cfg.backup (config.lib.mySystem.mkRestic
-      {
-        inherit app user;
-        paths = [ appFolder ];
-        inherit appFolder;
-      });
-
-
     # services.postgresqlBackup = {
     #   databases = [ app ];
     # };
-
-
-
   };
 }

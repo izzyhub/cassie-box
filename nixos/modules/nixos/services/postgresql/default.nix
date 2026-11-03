@@ -102,45 +102,47 @@ in
     );
 
 
-    services.postgresql = {
-      enable = true;
-      # Pinned explicitly rather than left to the stateVersion default,
-      # which would still be 15 (stateVersion is 23.11 and must not move).
-      # Migrated from 15 with `upgrade-pg-cluster`; 17 is also what 25.11+
-      # picks for fresh installs.
-      package = pkgs.postgresql_17;
-      identMap = ''
-        # ArbitraryMapName systemUser DBUser
-        superuser_map      root      postgres
-        superuser_map      postgres  postgres
-        # Let other names login as themselves
-        superuser_map      /^(.*)$   \1
-        superuser_map      root      rxresume
-      '';
-      authentication = ''
-        #type database  DBuser  auth-method optional_ident_map
-        local sameuser  all     peer        map=superuser_map
-        local rxresume  root    peer
-      '';
-      settings = {
-        max_connections = 2000;
-        random_page_cost = 1.1;
-        shared_buffers = "6GB";
+    services = {
+      postgresql = {
+        enable = true;
+        # Pinned explicitly rather than left to the stateVersion default,
+        # which would still be 15 (stateVersion is 23.11 and must not move).
+        # Migrated from 15 with `upgrade-pg-cluster`; 17 is also what 25.11+
+        # picks for fresh installs.
+        package = pkgs.postgresql_17;
+        identMap = ''
+          # ArbitraryMapName systemUser DBUser
+          superuser_map      root      postgres
+          superuser_map      postgres  postgres
+          # Let other names login as themselves
+          superuser_map      /^(.*)$   \1
+          superuser_map      root      rxresume
+        '';
+        authentication = ''
+          #type database  DBuser  auth-method optional_ident_map
+          local sameuser  all     peer        map=superuser_map
+          local rxresume  root    peer
+        '';
+        settings = {
+          max_connections = 2000;
+          random_page_cost = 1.1;
+          shared_buffers = "6GB";
+        };
       };
-    };
 
-    # enable backups
-    services.postgresqlBackup = mkIf cfg.backup {
-      enable = lib.mkForce true;
-      location = "${config.mySystem.dataFolder}/backup/nixos/postgresql";
+      # enable backups
+      postgresqlBackup = mkIf cfg.backup {
+        enable = lib.mkForce true;
+        location = "${config.mySystem.dataFolder}/backup/nixos/postgresql";
+      };
+
+      prometheus.exporters.postgres = {
+        enable = true;
+      };
     };
 
     systemd.services.postgresqlBackup = {
       requires = [ "postgresql.service" ];
-    };
-
-    services.prometheus.exporters.postgres = {
-      enable = true;
     };
 
 
