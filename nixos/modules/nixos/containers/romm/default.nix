@@ -113,7 +113,7 @@ in
       };
 
       "${app}-db" = {
-        image = "mariadb:11.4@sha256:d1891ede5a559f1086f55053bb8cc1569b0298338c4d72d71725a7f74f6ba620";
+        image = "mariadb:11.8@sha256:c4124d1afa875e47f2892edf26b482fa54f796e2f342d3717a04ca091a22a9bd";
         environmentFiles = [ config.sops.secrets."${category}/${app}/env".path ];
         environment = {
           MARIADB_DATABASE = app;
