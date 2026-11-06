@@ -9,7 +9,7 @@ let
   app = "redbot";
   category = "services";
   description = "Discord bot";
-  image = "phasecorex/red-discordbot:core-audio@sha256:e8bdd263731ec665641f960004cc721e11cb66f83898eab616c02c3c3f1a2a52";
+  image = "phasecorex/red-discordbot:core-audio@sha256:45282c6396df894e3613bfca6af819eca59316051c1b891052cae51cef4dc314";
   user = "568"; #string
   group = "568"; #string
   # port = ; #int
