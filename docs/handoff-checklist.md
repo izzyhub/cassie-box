@@ -145,7 +145,7 @@ Keep in Izzy's own vault; give Cassie a sealed card with the starred lines.
 - [ ] * Jupyter password. Grafana admin password. Filebrowser admin
       (default `admin`/`admin` unless changed). Immich admin. Paperless admin
       (`services/paperless/passwordFile`). Tandoor, Vikunja, Linkding,
-      Navidrome, Romm, Overseerr, Sonarr/Radarr/Lidarr/Readarr/Prowlarr,
+      Navidrome, Romm, Seerr, Sonarr/Radarr/Lidarr/Readarr/Prowlarr,
       SABnzbd, qBittorrent x2. Put all of these into Vaultwarden itself and
       the card only needs the Vaultwarden password.
 - [ ] * Kanidm (`https://idm.cassies.app`): the one login for every app behind SSO.

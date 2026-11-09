@@ -37,7 +37,7 @@ The cassie-box is configured for **internal-only access** with the following arc
 Once connected to Tailscale, access services via:
 - **Homepage**: `https://homepage.cassies.app`
 - **Plex**: `https://plex.cassies.app`
-- **Overseerr**: `https://overseerr.cassies.app`
+- **Seerr**: `https://seerr.cassies.app`
 - **Sonarr**: `https://sonarr.cassies.app`
 - **Radarr**: `https://radarr.cassies.app`
 - **Grafana**: `https://grafana.cassies.app`
@@ -49,7 +49,7 @@ The following services are automatically configured:
 
 ### Media Management
 - **Plex**: Media server
-- **Overseerr**: Request management
+- **Seerr**: Request management
 - **Tautulli**: Plex analytics
 - **Sonarr**: TV show management
 - **Radarr**: Movie management

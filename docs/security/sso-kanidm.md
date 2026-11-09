@@ -36,7 +36,7 @@
 | **A: forward-auth gate, pure nix** | code-server, jupyter, filebrowser, homepage, silverbullet, syncthing GUI, calibre (KasmVNC), changedetection, maintainerr, boat-ray UI, searxng, whoogle, redlib, victoriametrics / vmalert / alertmanager / vmagent, *arr stack, sabnzbd, qbittorrent ×2 | `sso = true` (+ `ssoBypass`, `ssoGroup`) in each module's `mkVhost` call. The *arrs also get `settings.auth.method = "External"`. |
 | **B: native OIDC from nix** | grafana, paperless, immich, romm, tandoor, vikunja | Kanidm client and env/settings in the app module. Some need a one-time account link in the UI. |
 | **B': header auth behind the gate** | navidrome, linkding, calibre-web | The app trusts `X-Auth-Request-Preferred-Username` from loopback. Clients get a bypass. |
-| **C: leave alone** | vaultwarden, plex, tautulli, overseerr (Plex accounts), jellyfin (TV clients), rstudio-server (PAM only in the open-source build), languagetool (API used by editor plugins), invidious (own accounts; optional gate) | Nothing. |
+| **C: leave alone** | vaultwarden, plex, tautulli, seerr (Plex accounts), jellyfin (TV clients), rstudio-server (PAM only in the open-source build), languagetool (API used by editor plugins), invidious (own accounts; optional gate) | Nothing. |
 
 The same things stay manual as in the source: each person enrols their own credential with a reset link.
 

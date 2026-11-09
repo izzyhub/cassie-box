@@ -6,14 +6,15 @@
 with lib;
 let
   cfg = config.mySystem.${category}.${app};
-  app = "overseerr";
+  app = "seerr";
   category = "services";
   description = "Media requests";
-  image = "ghcr.io/sct/overseerr:1.35.0@sha256:6197516c9d7b58ccf113455e32aafb94df5d91995fe50e8c2cae6ba6c7c7b7de";
+  image = "ghcr.io/seerr-team/seerr:v3.5.1@sha256:d8fab675b55ad293ded98fd71efcfd46054cbad9746534ae1cc4794a88c0b3be";
   user = "kah"; #string
   group = "kah"; #string
   port = 5055; #int
-  appFolder = "/mnt/data/appdata/${app}";
+  # Kept at the old Overseerr path so Seerr migrates the existing config in place
+  appFolder = "/mnt/data/appdata/overseerr";
   persistentFolder = "${config.mySystem.persistentFolder}/var/lib/${appFolder}";
   host = "${app}" + (if cfg.dev then "-dev" else "");
   url = "${host}.${config.networking.domain}";

@@ -12,7 +12,7 @@
     ./immich
     ./rxresume
     ./browserless
-    ./overseer
+    ./seerr
     ./changedetection
     ./linkding
     ./filebrowser

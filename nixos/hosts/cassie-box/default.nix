@@ -86,7 +86,7 @@
       vaultwarden.enable = true;
       homepage.enable = true;
 
-      overseerr.enable = true;
+      seerr.enable = true;
       tautulli.enable = true;
 
       searxng.enable = true;
