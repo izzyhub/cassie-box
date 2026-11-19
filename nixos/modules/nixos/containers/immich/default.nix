@@ -155,7 +155,7 @@ in
 
         immich-redis = {
           # Upstream's compose switched redis to valkey.
-          image = "docker.io/valkey/valkey:9@sha256:3add1a336a920ea54770a001ab6feb3da5fceea96a40373a3a2cd469b815f0b7";
+          image = "docker.io/valkey/valkey:9@sha256:3ab0eca823ebbf0fe352476ebac330ac9e5f14b592b9a954eab296d341e81b0e";
           extraOptions = [
             "--health-cmd=redis-cli ping || exit 1"
             "--health-interval=10s"
