@@ -181,7 +181,7 @@ in
         ];
       };
       tika = {
-        image = "apache/tika:4.2.0@sha256:f0d739823474b38a31881dff3cbc94cc25ed29d8456045d3ff26ae2400e48255";
+        image = "apache/tika:4.2.0@sha256:c33c3cf12f4e845463302db469d2e7c723b9be1385a6eee5e79bf1e179bd31da";
         ports = [
           "127.0.0.1:${tikaPort}:9998"
         ];
