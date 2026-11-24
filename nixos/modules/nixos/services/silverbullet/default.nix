@@ -9,7 +9,7 @@ let
   app = "silverbullet";
   category = "services";
   description = "Note-taking app";
-  # image = "zefhemel/silverbullet:2.12.1@sha256:370a3bf2daa37b7dbba62183085c57d5d43862189ea127e0765646d230561d9d";
+  # image = "zefhemel/silverbullet:3.0.0@sha256:02e9d68a240cda0d5f3ea08b81fad9fe84aff629d91ff4145230fdaea37cab6c";
   user = "568"; #string
   group = "568"; #string
   port = 3888; #int
