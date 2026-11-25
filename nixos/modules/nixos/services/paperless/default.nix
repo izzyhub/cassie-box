@@ -174,7 +174,7 @@ in
     virtualisation.oci-containers.containers = {
       gotenberg = {
         user = "gotenberg:gotenberg";
-        image = "gotenberg/gotenberg:9.9.3@sha256:9731688d1b6290e4c04d9a47dbd5fb29f92aa0076feb6592c5c777525892cd72";
+        image = "gotenberg/gotenberg:9.10.1@sha256:7d04e465cc8f700871092c2871c04f1e70d86eb399c9887cbd86a4a809e873ce";
         cmd = [ "gotenberg" "--chromium-disable-javascript=true" "--chromium-allow-list=file:///tmp/.*" ];
         ports = [
           "127.0.0.1:${gotenbergPort}:3000"
