@@ -79,13 +79,14 @@ in
       username = "token"; # Literal "token" for API token auth
       passwordFile = config.sops.secrets."${category}/${app}/token".path;
       domains = cfg.records;
-      # Legacy `use` rather than `usev4` on purpose: setting usev4 would let the
-      # module's usev6 default (ipify) kick in and start publishing AAAA
-      # records, which is not what this service is for.
-      use =
+      # IPv4 only. usev6 is cleared explicitly, otherwise the module's default
+      # (webv6 via ipify) would start publishing AAAA records, which is not
+      # what this service is for.
+      usev4 =
         if cfg.interface == null
-        then "cmd, cmd=${egressAddress}"
-        else "if, if=${cfg.interface}";
+        then "cmdv4, cmdv4=${egressAddress}"
+        else "ifv4, ifv4=${cfg.interface}";
+      usev6 = "";
       extraConfig = ''
         ttl=300
       '';

@@ -33,8 +33,7 @@
 
     xdg.enable = true;
 
-    nixpkgs.config = {
-      allowUnfree = true;
-    };
+    # No nixpkgs.config here: home-manager.useGlobalPkgs = true, so HM uses the
+    # NixOS pkgs (which already sets allowUnfree in flake.nix).
   };
 }

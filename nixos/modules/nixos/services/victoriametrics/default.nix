@@ -98,7 +98,7 @@ in
         retentionPeriod = "12";
       };
 
-      vmalert = {
+      vmalert.instances."" = {
         enable = true;
         settings = {
           "datasource.url" = "http://localhost:${builtins.toString port}";
