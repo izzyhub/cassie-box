@@ -119,7 +119,7 @@ in
         # withSecretProvisioning = patched build that lets provisioning SET oauth2 basic
         # secrets + admin passwords (upstream only lets you read them back). Version must
         # be explicit per the nixpkgs module.
-        package = pkgs.kanidm_1_11.withSecretProvisioning;
+        package = pkgs.kanidm_1_12.withSecretProvisioning;
 
         client = {
           enable = true;
